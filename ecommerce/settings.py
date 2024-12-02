@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     
     'store', #Django app
+    
+    'cart', #Django app
 ]
 
 MIDDLEWARE = [
@@ -53,6 +55,8 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'ecommerce.urls'
 
+#makes data available on every page
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -64,6 +68,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'store.views.categories', 
             ],
         },
     },
