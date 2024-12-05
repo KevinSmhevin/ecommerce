@@ -35,6 +35,30 @@ class Cart():
         
         self.session.modified = True
         
+    def delete(self, product):
+        
+        product_id = str(product)
+        
+        if product_id in self.cart:
+            
+            del self.cart[product_id]
+        
+        self.session.modified = True
+        
+    def update(self, product, qty):
+        
+        product_id = str(product)
+        
+        product_qty = qty
+        
+        if product_id in self.cart: 
+            
+            self.cart[product_id]['qty'] = product_qty
+        
+        self.session.modified = True
+        
+        
+        
         
     def __len__(self):
         
@@ -47,7 +71,9 @@ class Cart():
         
         products = Product.objects.filter(id__in=all_product_ids)
         
-        cart = self.cart.copy()
+        import copy
+        
+        cart = copy.deepcopy(self.cart)
         
         for product in products:
             
