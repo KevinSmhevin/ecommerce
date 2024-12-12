@@ -16,7 +16,7 @@
             <div class="col-lg-6 col-md-8 mx-auto">
                 
 
-                <h4> Pokebin quote here </h4>
+                <h4> Pokemon cards and more! </h4>
 
 
                 <br>
@@ -24,14 +24,15 @@
 
                 <p class="lead text-muted">
 
-                Browse our extensive collection.
+                Take a look around :D 
 
                 </p>
 
 
                 <br>
         
-                <a href="{% url 'register' %}" class="btn btn-primary my-2"> Create an account </a>
+                <a href="{% url 'register' %}" class="btn btn-primary my-2"> <i class="fa fa-user-plus" aria-hidden="true"></i>
+                    &nbsp; Create an account </a>
                 
                 
             </div>
@@ -53,7 +54,7 @@
             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-5 g-3">
             {% for product in all_products %}
                 <div class="col">
-                    <div class="card shadow-sm">
+                    <div class="card shadow-sm p-1">
                     <img class="img-fluid" alt="Responsive image" src="{{ product.image.url }}">
                         <div class="card-body">
                         <p class="card-text">

@@ -21,6 +21,11 @@
         <h4>Welcome {{user}}</h4>
 
         <hr>
+        <p>Here you can:</p>
+        <ul>
+            <li> Track Orders </li>
+            <li> Make changes to your account </li>
+        </ul>
 
     </div>
 
@@ -45,11 +50,9 @@
 
         <hr>
 
-        <a class="btn btn-primary navbar-btn text-white" type="button"  href="{% url 'user-logout' %}"> Profile Management </a>
+        <a class="btn btn-primary navbar-btn text-white" type="button"  href="{% url 'profile-management' %}"> Profile Management </a>
 
         <br><br>
-
-        <a class="btn btn-danger navbar-btn text-white" type="button"  href="{% url 'user-logout' %}"> Logout </a>
 
 
     </div>
