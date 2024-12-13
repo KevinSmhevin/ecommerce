@@ -18,7 +18,7 @@
 
         <!-- CSS -->
         
-        <link rel="stylesheet" href="https://bootswatch.com/5/flatly/bootstrap.min.css">
+        <link rel="stylesheet" href="https://bootswatch.com/5/minty/bootstrap.min.css">
 
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
@@ -46,8 +46,8 @@
     
 
 
-    <nav class="navbar navbar-expand-lg bg-primary justify-content-center">
-
+    <nav class="navbar navbar-expand-lg bg-dark justify-content-center" data-bs-theme="dark">
+        <div class="container-fluid">
 
         <a class="navbar-brand main-heading text-white" href="{% url 'store' %}"> 
                 
@@ -116,21 +116,25 @@
                 {% if user.is_authenticated %}
 
                     <li class="nav-item">
-                        <a class="btn btn-alert navbar-btn text-white" type="button"  href="{% url 'dashboard' %}"> Dashboard </a>
+                        <a class="btn btn-alert navbar-btn text-white" type="button"  href="{% url 'dashboard' %}"> <i class="fa fa-home" aria-hidden="true"></i>
+                          &nbsp;  Dashboard </a>
                     </li>
 
 
                     <li class="nav-item">
-                        <a class="btn btn-alert navbar-btn text-white" type="button"  href="{% url 'user-logout' %}"> Logout </a>
+                        <a class="btn btn-alert navbar-btn text-white" type="button"  href="{% url 'user-logout' %}"><i class="fa fa-sign-out" aria-hidden="true"></i>
+                            &nbsp; Logout </a>
                     </li>
                 
                     {% else %}
 
                         <li class="nav-item">
-                            <a class="btn btn-alert navbar-btn text-white" type="button"  href="{% url 'register' %}"> Register </a>
+                            <a class="btn btn-alert navbar-btn text-white" type="button"  href="{% url 'register' %}"> <i class="fa fa-user-plus" aria-hidden="true"></i>
+                              &nbsp;  Register </a>
                         </li>
                         <li class="nav-item">
-                            <a class="btn btn-alert navbar-btn text-white" type="button"  href="{% url 'my-login' %}"> Login </a>
+                            <a class="btn btn-alert navbar-btn text-white" type="button"  href="{% url 'my-login' %}"> <i class="fa fa-sign-in" aria-hidden="true"></i>
+                              &nbsp;  Login </a>
                         </li>
                     
                     {% endif %}
@@ -183,8 +187,35 @@
         
         </div>
 
-
+    </div>
     </nav>
+
+    {% for message in messages %}
+
+        {% if message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+
+            <h6 id="message-timer" class="alert alert-success text-center"><i class="fa fa-sign-out" aria-hidden="true"></i>
+                &nbsp; {{message}}</h6>
+
+        {% endif %}
+
+        {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+
+            <h6 id="message-timer" class="alert alert-danger text-center"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+               &nbsp; {{message}}</h6>
+
+        {% endif %}
+
+
+        {% if message.level == DEFAULT_MESSAGE_LEVELS.INFO %}
+
+        <h6 id="message-timer" class="alert alert-info text-center"> <i class="fa fa-check-square-o" aria-hidden="true"></i>
+           &nbsp; {{message}}</h6>
+
+        {% endif %}
+
+
+    {% endfor %}
 
 
     <body>
@@ -205,6 +236,8 @@
 
 
     </body>
+
+    <script src="{% static 'js/app.js' %}"></script>
 
 
 </html>

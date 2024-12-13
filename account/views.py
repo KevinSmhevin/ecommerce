@@ -117,7 +117,10 @@ def my_login(request):
                                 
                 auth.login(request, user)
                 
-                return redirect("dashboard")
+                messages.success(request, "Login success")
+
+                
+                return redirect("store")
         
 
         
@@ -133,8 +136,24 @@ def my_login(request):
 
 def user_logout(request):
     
-    auth.logout(request)
+    try:
     
+        for key in list(request.session.keys()):
+            
+            if key == 'session_key':
+                
+                continue
+            
+            else:
+                
+                del request.session[key]
+    
+    except KeyError:
+        
+        pass
+    
+    messages.success(request, "Logout success")
+        
     return redirect("store")
 
 @login_required(login_url='my-login')
@@ -156,6 +175,10 @@ def profile_management(request):
         if user_form.is_valid():
             user_form.save()
             
+            
+            messages.info(request, "account has been updated")
+
+            
             return redirect('dashboard')
     
     context = { 'user_form': user_form }
@@ -170,6 +193,8 @@ def delete_account(request):
     if request.method == 'POST':
         
         user.delete()
+        
+        messages.error(request, "Account deleted")
         
         return redirect('store')
     
