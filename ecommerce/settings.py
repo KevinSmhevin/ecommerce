@@ -10,6 +10,16 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+# - Django environ setup
+
+import environ
+
+env = environ.Env()
+
+environ.Env.read_env()
+
+
+
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,12 +30,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-fs9c7u26vdwuf-oa49_a(25h#8p*l^uv(kuwo-rk#00e56&8yx'
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
+
+CSRF_TRUSTED_ORIGINS = ['']
 
 
 # Application definition
@@ -49,6 +61,8 @@ INSTALLED_APPS = [
     'mathfilters',
     
     'crispy_forms', # Crispy forms
+    
+    'storages',
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
@@ -91,12 +105,13 @@ WSGI_APPLICATION = 'ecommerce.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 
 # Password validation
@@ -153,5 +168,58 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = '587'
 EMAIL_USE_TLS = 'True'
 
-EMAIL_HOST_USER = 'kevincparas@gmail.com'
-EMAIL_HOST_PASSWORD = 'gghb wwkz kika cvgr'
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+
+
+# allow paypal popups 
+
+SECURE_CROSS_ORIGIN_OPENER_POLICY='same-origin-allow-popups'
+
+
+# Amazon S3 integration 
+
+AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME')
+
+# Django 4.2 storage configuration for s3
+
+
+STORAGES = {
+    
+    # Media file (image) management
+    
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3StaticStorage",
+    },
+    
+    # CSS and JS file management
+    
+    "staticfiles": {
+        "BACKEND": "storages.backends.s3boto3.S3StaticStorage",
+    },
+    
+}
+
+
+AWS_S3_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
+
+AWS_S3_FILE_OVERWRITE = False 
+
+# RDS configuration settings
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        
+        'NAME': env('DB_NAME'),
+        
+        'USER': env('DB_USER'),
+        
+        'PASSWORD': env('DB_PASSWORD'),
+        
+        'HOST': env('DB_HOST'),
+        
+        'PORT': '5432',
+        
+    }
+}
