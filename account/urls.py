@@ -51,4 +51,8 @@ urlpatterns = [
     
     path('track-orders', views.track_orders, name='track-orders'),
     
+    # check order url
+    
+    path('check_order', views.check_order, name='check-orders')
+    
 ]

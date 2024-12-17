@@ -4,7 +4,13 @@ from . models import ShippingAddress, Order, OrderItem
 
 from cart.cart import Cart
 
+from store.models import Product
+
 from django.http import JsonResponse
+
+from django.core.mail import send_mail
+
+from django.conf import settings
 
 def checkout(request):
     
@@ -61,7 +67,7 @@ def complete_order(request):
             2) Create order -> Guest users without an account
         
         '''
-        
+        product_list = []
         if request.user.is_authenticated:
             
             order = Order.objects.create(full_name=name, email=email, shipping_address=shipping_address, 
@@ -72,16 +78,37 @@ def complete_order(request):
                 OrderItem.objects.create(order_id=order.pk, product=item['product'], quantity=item['qty'],
                                          price=item['price'], user=request.user)
                 
+                update_catalog = Product.objects.get(item['product'])
+                update_catalog.stock -= 1
+                update_catalog.units_sold += 1
+                update_catalog.save()
+                product_list.append(item['product'])
         else: # guest users
             
             order = Order.objects.create(full_name=name, email=email, shipping_address=shipping_address, 
                                          amount_paid=total_cost)
-
+            
             for item in cart: 
                 
                 OrderItem.objects.create(order_id=order.pk, product=item['product'], quantity=item['qty'],
                                          price=item['price'])
                 
+                update_catalog = Product.objects.get(item['product'])
+                update_catalog.stock -= 1
+                update_catalog.units_sold += 1
+                update_catalog.save()
+                product_list.append(item['product'])
+                
+        
+        all_products = product_list
+        # email order
+        
+        send_mail('Order received', 'Hi! ' + '\n\n' + 'Thank you for placing your order' + '\n\n' + 
+                    'Please see your order below:' + '\n\n' + str(all_products) + '\n\n' + 'Total paid: $' +
+                    str(cart.get_total()), settings.EMAIL_HOST_USER, [email], fail_silently=False)
+                
+            
+            
         order_success = True
         
         response = JsonResponse({'success': order_success})

@@ -2,10 +2,25 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 
 from django.contrib.auth.models import User
 
+from payment.models import Order
+
 from django import forms
 
 from django.forms.widgets import PasswordInput, TextInput
 
+
+#check order form
+
+class CheckOrderForm(forms.ModelForm):
+    
+    class Meta:
+        
+        model = Order
+        
+        fields = ['id', 'email']
+        exclude = ['full_name', 'shipping_address', 'amount_paid' , 'date_ordered', 'tracking_number', 'courier', 'user']
+        
+        
 
 # Registration Form
 

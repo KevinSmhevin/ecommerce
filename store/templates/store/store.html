@@ -43,9 +43,16 @@
 
 
                 <br>
-        
-                <a href="{% url 'register' %}" class="btn btn-primary my-2"> <i class="fa fa-user-plus" aria-hidden="true"></i>
-                    &nbsp; Create an account </a>
+                
+                    {% if user.is_authenticated %}
+
+                    {% else %}
+
+            
+                        <a href="{% url 'register' %}" class="btn btn-primary my-2"> <i class="fa fa-user-plus" aria-hidden="true"></i>
+                            &nbsp; Create an account </a>
+
+                    {% endif %}
                 
                 
             </div>
@@ -65,23 +72,43 @@
           <hr>
           <br>
             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-5 g-3">
-            {% for product in all_products %}
-                <div class="col">
-                    <div class="card shadow-sm p-1 item-box">
-                        <a class="text-info text-decoration-none" href="{{product.get_absolute_url}}">
-                            <img class="img-fluid" alt="Responsive image" src="{{ product.image.url }} ">
-                        </a>
-                        <div class="card-body">
-                            <p class="card-text">
-                                <a class="text-info text-decoration-none" href="{{product.get_absolute_url}}">{{ product.title | capfirst }}</a>
-                            </p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h5> $ {{ product.price }} </h5>
+            {% for product in products %}
+                {% if product.stock > 0 %}
+                    <div class="col">
+                        <div class="card shadow-sm p-1 item-box">
+                            <a class="text-info text-decoration-none" href="{{product.get_absolute_url}}">
+                                <img class="img-fluid" alt="Responsive image" src="{{ product.image.url }} ">
+                            </a>
+                            <div class="card-body">
+                                <p class="card-text">
+                                    <a class="text-info text-decoration-none" href="{{product.get_absolute_url}}">{{ product.title | capfirst }}</a>
+                                </p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5> $ {{ product.price }} </h5>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                {% endif %}
             {% endfor %}
+
+
+            <nav aria-label="Page navigation example">
+                <ul class="pagination justify-content-center">
+                    {% if products.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page=1">&laquo First</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ products.previous_page_number }}"> previous</a></li>
+                    {% endif %}
+
+                    <li class="page-item disabled"><a href="#" class="page-link">Page {{products.number}} of {{products.paginator.num_pages}}</a></li>
+
+                    {% if products.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{products.next_page_number}}">next</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ products.paginator.num_pages }}"> Last &raquo </a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+
             </div>
         </div>
     </div>

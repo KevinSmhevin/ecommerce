@@ -43,6 +43,10 @@ class Product(models.Model):
     
     image = models.ImageField(upload_to='images/')
     
+    stock = models.PositiveIntegerField(default=0)
+    
+    units_sold = models.PositiveIntegerField(default=0)
+    
     class Meta:
     
         verbose_name_plural = 'products'

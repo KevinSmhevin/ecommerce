@@ -1,6 +1,6 @@
 from django.shortcuts import redirect, render
 
-from .forms import CreateUserForm, LoginForm, UpdateUserForm
+from .forms import CreateUserForm, LoginForm, UpdateUserForm, CheckOrderForm
 
 from payment.forms import ShippingForm
 from payment.models import ShippingAddress, Order, OrderItem
@@ -22,6 +22,16 @@ from django.contrib.auth import authenticate, login, logout
 
 from django.contrib.auth.decorators import login_required
 
+def check_order(request):
+    pass
+    # form = CheckOrderForm()
+    
+    # if request.method == 'GET':
+        
+    #     form = CheckOrderForm(request.GET)
+        
+    #     if form.is_valid():
+            
 
 def register(request):
     
@@ -250,6 +260,8 @@ def track_orders(request):
         
         orders = OrderItem.objects.filter(user=request.user)
         
+        order = Order.objects.filter()
+        
         context = {'orders': orders}
         
         return render(request, 'account/track-orders.html', context=context)
@@ -257,6 +269,8 @@ def track_orders(request):
     except:
         
         return render(request, 'account/track-orders.html')
+    
+
         
         
 

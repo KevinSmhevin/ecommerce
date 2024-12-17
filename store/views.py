@@ -2,6 +2,8 @@ from django.shortcuts import render, get_object_or_404
 
 from . models import Category, Product
 
+from django.core.paginator import Paginator
+
 
 # Create your views here.
 
@@ -9,7 +11,11 @@ def store(request):
     
     all_products = Product.objects.all()
     
-    context = { 'all_products': all_products }
+    p = Paginator(Product.objects.all().order_by('pk'), 25)
+    page = request.GET.get('page')
+    products = p.get_page(page)
+    
+    context = { 'all_products': all_products, 'products': products }
     
     return render(request, 'store/store.html', context)
 
