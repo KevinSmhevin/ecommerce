@@ -21,7 +21,7 @@
 </style>
 
     <!-- Introduction section -->
-  
+<body>
     <section class="py-4 text-center container">
 
         <div class="row py-lg-5">
@@ -77,7 +77,7 @@
                     <div class="col">
                         <div class="card shadow-sm p-1 item-box">
                             <a class="text-info text-decoration-none" href="{{product.get_absolute_url}}">
-                                <img class="img-fluid" alt="Responsive image" src="{{ product.image.url }} ">
+                                <img class="img-fluid img-thumbnail" alt="Responsive image" src="{{ product.image.url }} ">
                             </a>
                             <div class="card-body">
                                 <p class="card-text">
@@ -92,26 +92,27 @@
                 {% endif %}
             {% endfor %}
 
-
-            <nav aria-label="Page navigation example">
-                <ul class="pagination justify-content-center">
-                    {% if products.has_previous %}
-                        <li class="page-item"><a class="page-link" href="?page=1">&laquo First</a></li>
-                        <li class="page-item"><a class="page-link" href="?page={{ products.previous_page_number }}"> previous</a></li>
-                    {% endif %}
-
-                    <li class="page-item disabled"><a href="#" class="page-link">Page {{products.number}} of {{products.paginator.num_pages}}</a></li>
-
-                    {% if products.has_next %}
-                        <li class="page-item"><a class="page-link" href="?page={{products.next_page_number}}">next</a></li>
-                        <li class="page-item"><a class="page-link" href="?page={{ products.paginator.num_pages }}"> Last &raquo </a></li>
-                    {% endif %}
-                </ul>
-            </nav>
-
             </div>
         </div>
+
+        <nav aria-label="Page navigation example">
+            <ul class="pagination justify-content-center">
+                {% if products.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page=1">&laquo First</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ products.previous_page_number }}"> previous</a></li>
+                {% endif %}
+    
+                <li class="page-item disabled"><a href="#" class="page-link">Page {{products.number}} of {{products.paginator.num_pages}}</a></li>
+    
+                {% if products.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{products.next_page_number}}">next</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ products.paginator.num_pages }}"> Last &raquo </a></li>
+                {% endif %}
+            </ul>
+        </nav>
+
     </div>
+</body>
 
 
 

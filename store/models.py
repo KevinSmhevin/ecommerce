@@ -43,6 +43,12 @@ class Product(models.Model):
     
     image = models.ImageField(upload_to='images/')
     
+    image2 = models.ImageField(upload_to='images/', blank=True, null=True)
+    
+    image3 = models.ImageField(upload_to='images/', blank=True, null=True)
+
+    image4 = models.ImageField(upload_to='images/', blank=True, null=True)
+
     stock = models.PositiveIntegerField(default=0)
     
     units_sold = models.PositiveIntegerField(default=0)

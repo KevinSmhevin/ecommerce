@@ -12,9 +12,52 @@
         <div class="row g-3">
 
             <div class="col-md-5 col-lg-5 order-md-first bg-light">
-            
-                <img class="img-fluid mx-auto d-block" alt="Responsive image" src="{{ product.image.url}}"> <!-- Product image -->
-            
+                <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
+                    <ol class="carousel-indicators">
+                      <li data-target="#carouselExampleIndicators" data-slide-to="0" class="active"></li>
+                        {% if product.image2 %}
+                            <li data-target="#carouselExampleIndicators" data-slide-to="1"></li>
+                        {% endif %}
+                        {% if product.image3 %}
+                            <li data-target="#carouselExampleIndicators" data-slide-to="2"></li>
+                        {% endif %}
+                        {% if product.image4 %}
+                            <li data-target="#carouselExampleIndicators" data-slide-to="3"></li>
+                        {% endif %}
+                    </ol>
+                    <div class="carousel-inner">
+                      <div class="carousel-item active">
+                        <img class="img-fluid mx-auto img-thumbnail d-block" alt="First slide" src="{{ product.image.url}}"> <!-- Product image -->
+                      </div>
+                      {% if product.image2 %}
+                      <div class="carousel-item">
+                        <img class="img-fluid mx-auto img-thumbnail d-block" alt="Second slide" src="{{ product.image2.url}}"> <!-- Product image -->
+                      </div>
+                      {% endif %}
+                      {% if product.image3 %}
+                      <div class="carousel-item">
+                        <img class="img-fluid mx-auto img-thumbnail d-block" alt="Third slide" src="{{ product.image3.url}}"> <!-- Product image -->
+                      </div>
+                      {% endif %}
+                      {% if product.image4 %}
+                      <div class="carousel-item">
+                        <img class="img-fluid mx-auto img-thumbnail d-block" alt="Fourth slide" src="{{ product.image4.url}}"> <!-- Product image -->
+                      </div>
+                      {% endif %}
+                    </div>
+                    {% if product.image2 %}
+                        <a class="carousel-control-prev text-primary" href="#carouselExampleIndicators" role="button" data-slide="prev">
+                            <span class="carousel-control-prev-icon text-primary" aria-hidden="true"><i class="fa fa-chevron-left" aria-hidden="true"></i>
+                            </span>
+                            <span class="sr-only text-primary">Previous</span>
+                        </a>
+                        <a class="carousel-control-next text-primary" href="#carouselExampleIndicators" role="button" data-slide="next">
+                            <span class="carousel-control-next-icon text-primary" aria-hidden="true"><i class="fa fa-chevron-right" aria-hidden="true"></i>
+                            </span>
+                            <span class="sr-only text-primary">Next</span>
+                        </a>
+                    {% endif %}
+                </div>
             </div>
 
             <div class="col-md-7 col-lg-7 ps-md-3 ps-lg-5">

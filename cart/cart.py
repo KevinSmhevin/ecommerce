@@ -85,6 +85,8 @@ class Cart():
             
             item['total'] = item['price'] * item['qty']
             
+            item['product_id'] = product.id
+            
             yield item
             
         

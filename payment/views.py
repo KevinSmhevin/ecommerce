@@ -77,8 +77,7 @@ def complete_order(request):
                 
                 OrderItem.objects.create(order_id=order.pk, product=item['product'], quantity=item['qty'],
                                          price=item['price'], user=request.user)
-                
-                update_catalog = Product.objects.get(item['product'])
+                update_catalog = Product.objects.get(pk=item['product_id'])
                 update_catalog.stock -= 1
                 update_catalog.units_sold += 1
                 update_catalog.save()
@@ -93,7 +92,7 @@ def complete_order(request):
                 OrderItem.objects.create(order_id=order.pk, product=item['product'], quantity=item['qty'],
                                          price=item['price'])
                 
-                update_catalog = Product.objects.get(item['product'])
+                update_catalog = Product.objects.get(pk=item['product_id'])
                 update_catalog.stock -= 1
                 update_catalog.units_sold += 1
                 update_catalog.save()
