@@ -53,6 +53,6 @@ urlpatterns = [
     
     # check order url
     
-    path('check_order', views.check_order, name='check-orders')
+    path('check-order', views.check_order, name='check-order')
     
 ]

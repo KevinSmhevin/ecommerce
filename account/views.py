@@ -1,6 +1,6 @@
 from django.shortcuts import redirect, render
 
-from .forms import CreateUserForm, LoginForm, UpdateUserForm, CheckOrderForm
+from .forms import CreateUserForm, LoginForm, UpdateUserForm
 
 from payment.forms import ShippingForm
 from payment.models import ShippingAddress, Order, OrderItem
@@ -22,16 +22,22 @@ from django.contrib.auth import authenticate, login, logout
 
 from django.contrib.auth.decorators import login_required
 
-def check_order(request):
-    pass
-    # form = CheckOrderForm()
-    
-    # if request.method == 'GET':
-        
-    #     form = CheckOrderForm(request.GET)
-        
-    #     if form.is_valid():
+def check_order(request):    
+    if request.method == "POST":
+        order_number = request.POST['order-number']
+        try:
+            order = Order.objects.get(id=order_number)
             
+            return render(request, 'account/check-order.html', {'order': order})
+        
+        except:
+            messages.error(request, "unable to find order number")
+            return render(request, 'account/check-order.html', {})
+
+    else:
+        
+        return render(request, 'account/check-order.html', {})
+           
 
 def register(request):
     

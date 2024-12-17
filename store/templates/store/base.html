@@ -116,6 +116,11 @@
                 {% if user.is_authenticated %}
 
                     <li class="nav-item">
+                        <a class="btn btn-alert navbar-btn text-white" type="button"  href="{% url 'check-order' %}"><i class="fa fa-search" aria-hidden="true"></i>
+                        &nbsp;  Check Order </a>
+                    </li>
+
+                    <li class="nav-item">
                         <a class="btn btn-alert navbar-btn text-white" type="button"  href="{% url 'dashboard' %}"> <i class="fa fa-home" aria-hidden="true"></i>
                           &nbsp;  Dashboard </a>
                     </li>
@@ -127,6 +132,10 @@
                     </li>
                 
                     {% else %}
+                        <li class="nav-item">
+                            <a class="btn btn-alert navbar-btn text-white" type="button"  href="{% url 'check-order' %}"><i class="fa fa-search" aria-hidden="true"></i>
+                            &nbsp;   Check Order </a>
+                        </li>
 
                         <li class="nav-item">
                             <a class="btn btn-alert navbar-btn text-white" type="button"  href="{% url 'register' %}"> <i class="fa fa-user-plus" aria-hidden="true"></i>

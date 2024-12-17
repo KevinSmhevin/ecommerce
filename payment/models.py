@@ -68,6 +68,8 @@ class Order(models.Model):
     
     courier = models.CharField(max_length=300, blank=True, null=True)
     
+    id = models.BigAutoField(primary_key=True)
+    
     #FK
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
