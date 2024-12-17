@@ -102,7 +102,7 @@ def complete_order(request):
         all_products = product_list
         # email order
         
-        send_mail('Order received', 'Hi! ' + '\n\n' + 'Thank you for placing your order' + '\n\n' + 
+        send_mail('Order received', 'Hi! ' + '\n\n' + 'Thank you for placing your order. Your order numer is' + str(order.pk) + '\n\n' + 
                     'Please see your order below:' + '\n\n' + str(all_products) + '\n\n' + 'Total paid: $' +
                     str(cart.get_total()), settings.EMAIL_HOST_USER, [email], fail_silently=False)
                 
