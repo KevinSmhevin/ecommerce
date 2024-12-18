@@ -74,11 +74,23 @@
                   
                     <option value="">1</option>
                   
-                    <option value="">2</option>
-                  
-                    <option value="">3</option>
-                  
-                    <option value="">4</option>
+                    {% if product.stock > 1 %}
+              
+                      <option value="2">2</option>
+
+                    {% endif %}
+
+                    {% if product.stock > 2 %}
+
+                      <option value="3">3</option>
+
+                    {% endif %}
+
+                    {% if product.stock > 3 %}
+
+                      <option value="4">4</option>
+
+                    {% endif %}
                   
                   </select>
                   

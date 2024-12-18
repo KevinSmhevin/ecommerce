@@ -9,9 +9,9 @@ from django.core.paginator import Paginator
 
 def store(request):
     
-    all_products = Product.objects.all()
+    all_products = Product.objects.filter(stock__gt=0).values()
     
-    p = Paginator(Product.objects.all().order_by('pk'), 10)
+    p = Paginator(Product.objects.all().filter(stock__gt=0).order_by('pk'), 6)
     page = request.GET.get('page')
     products = p.get_page(page)
     
