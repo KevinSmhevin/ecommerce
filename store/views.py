@@ -11,7 +11,7 @@ def store(request):
     
     all_products = Product.objects.all()
     
-    p = Paginator(Product.objects.all().order_by('pk'), 25)
+    p = Paginator(Product.objects.all().order_by('pk'), 10)
     page = request.GET.get('page')
     products = p.get_page(page)
     
