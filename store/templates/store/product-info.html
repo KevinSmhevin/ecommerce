@@ -54,13 +54,25 @@
         border-bottom: 1px solid #e5e5e5 !important;
     }
 
+    /* Align columns vertically and horizontally */
+    .row.g-0 {
+        display: flex;
+        align-items: center;
+    }
+
     /* Add spacing between image and description */
     .product-image-column {
         padding-right: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .product-info-column {
         padding-left: 2rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 
     /* Adjust image size if needed */
@@ -69,7 +81,17 @@
         height: auto;
     }
 
+    /* Center carousel content */
+    .product-image-column .carousel {
+        width: 100%;
+    }
+
     @media (max-width: 768px) {
+        .row.g-0 {
+            min-height: auto;
+            flex-direction: column;
+        }
+
         .product-image-column {
             padding-right: 0;
             margin-bottom: 2rem;
@@ -95,7 +117,7 @@
 
         <div class="row g-0">
 
-            <div class="col-md-5 col-lg-4 order-md-first bg-light product-image-column">
+            <div class="col-md-5 col-lg-4 order-md-first product-image-column">
                 <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
                     <div class="carousel-inner">
                       <div class="carousel-item active">
