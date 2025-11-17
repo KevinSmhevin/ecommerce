@@ -1,8 +1,9 @@
 from django.shortcuts import render, get_object_or_404
+from django.contrib import messages
+from django.core.paginator import Paginator
 
 from . models import Category, Product
 
-from django.core.paginator import Paginator
 
 
 # Create your views here.
@@ -42,4 +43,15 @@ def product_info(request, product_slug):
     
     context =  { 'product': product }
     
+    if request.method == 'POST':
+        messages.success(request, 'Quantity updated successfully!')
+        return render(request, 'store/product-info.html', context)
+    
     return render(request, 'store/product-info.html', context)
+
+def add(request, product_slug):
+    
+    product = get_object_or_404(Product, slug=product_slug)
+    
+    
+    

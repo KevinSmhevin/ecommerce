@@ -8,23 +8,85 @@
 <style>
 
     body {
-        background-color: #F0FFF0;
+        background-color: #ffffff;
+        color: #1a1a1a;
     }
 
     .carousel-control-next-icon {background-color: black;}
 
     .carousel-control-prev-icon {background-color: black;}
 
+    /* Product info styling */
+    .product-info-section {
+        border: 1px solid #e5e5e5;
+        padding: 2rem;
+        margin-top: 2rem;
+    }
+
+    .product-info-section h1,
+    .product-info-section strong {
+        color: #1a1a1a;
+    }
+
+    .product-info-section hr {
+        border-top: 1px solid #e5e5e5;
+    }
+
+    .product-info-section p {
+        color: #1a1a1a;
+    }
+
+    .product-purchase-box {
+        border: 1px solid #e5e5e5;
+        border-radius: 0;
+    }
+
+    .product-purchase-box .border-bottom {
+        border-bottom: 1px solid #e5e5e5 !important;
+    }
+
+    /* Add spacing between image and description */
+    .product-image-column {
+        padding-right: 2rem;
+    }
+
+    .product-info-column {
+        padding-left: 2rem;
+    }
+
+    /* Adjust image size if needed */
+    .product-image-column img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    @media (max-width: 768px) {
+        .product-image-column {
+            padding-right: 0;
+            margin-bottom: 2rem;
+        }
+        
+        .product-info-column {
+            padding-left: 0;
+        }
+    }
 
 </style>
 
 <div class="container">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
 
     <main class="pt-5">
 
-        <div class="row g-3">
+        <div class="row g-0">
 
-            <div class="col-md-5 col-lg-5 order-md-first bg-light">
+            <div class="col-md-5 col-lg-4 order-md-first bg-light product-image-column">
                 <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
                     <div class="carousel-inner">
                       <div class="carousel-item active">
@@ -59,7 +121,7 @@
                 </div>
             </div>
 
-            <div class="col-md-7 col-lg-7 ps-md-3 ps-lg-5">
+            <div class="col-md-7 col-lg-8 product-info-column product-info-section">
 
                 <h1 class="mb-0 h4"> {{product.title}} </h1>
 
@@ -73,7 +135,7 @@
 
                 <p> {{ product.description}} </p>
 
-                <div class="border">
+                <div class="border product-purchase-box">
 
                     <div class="col border-bottom">
 
@@ -173,14 +235,51 @@
 
             success: function(json){
 
-            //    console.log(json)
+                // Update cart quantity in navbar
+                if (document.getElementById("cart-qty")) {
+                    document.getElementById("cart-qty").textContent = json.qty;
+                }
 
-                document.getElementById("cart-qty").textContent = json.qty
+                // Show success message
+                var alertHtml = '<div class="alert alert-success alert-dismissible fade show" role="alert" style="margin-top: 1rem; position: relative; padding-right: 3rem;">' +
+                    '<strong>Success!</strong> ' + json.message +
+                    '<button type="button" class="close" data-dismiss="alert" aria-label="Close" style="position: absolute; top: 50%; right: 1rem; transform: translateY(-50%); border: none; background: none; font-size: 1.5rem; cursor: pointer; line-height: 1; padding: 0; width: 1.5rem; height: 1.5rem; display: flex; align-items: center; justify-content: center;">' +
+                    '<span aria-hidden="true" style="line-height: 1;">&times;</span>' +
+                    '</button>' +
+                    '</div>';
+                
+                // Remove any existing alerts first
+                $('.alert').remove();
+                
+                // Insert alert at the top of the container
+                $('.container').prepend(alertHtml);
+                
+                // Auto-hide alert after 3 seconds
+                setTimeout(function() {
+                    $('.alert').fadeOut('slow', function() {
+                        $(this).remove();
+                    });
+                }, 3000);
 
             },
 
             error: function(xhr, errmsg, err){
-
+                // Show error message
+                var alertHtml = '<div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-top: 1rem; position: relative; padding-right: 3rem;">' +
+                    '<strong>Error!</strong> Error adding product to cart. Please try again.' +
+                    '<button type="button" class="close" data-dismiss="alert" aria-label="Close" style="position: absolute; top: 50%; right: 1rem; transform: translateY(-50%); border: none; background: none; font-size: 1.5rem; cursor: pointer; line-height: 1; padding: 0; width: 1.5rem; height: 1.5rem; display: flex; align-items: center; justify-content: center;">' +
+                    '<span aria-hidden="true" style="line-height: 1;">&times;</span>' +
+                    '</button>' +
+                    '</div>';
+                
+                $('.alert').remove();
+                $('.container').prepend(alertHtml);
+                
+                setTimeout(function() {
+                    $('.alert').fadeOut('slow', function() {
+                        $(this).remove();
+                    });
+                }, 3000);
             }
 
         })
