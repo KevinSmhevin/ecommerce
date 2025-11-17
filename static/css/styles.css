@@ -24,14 +24,52 @@ body {
     background-color: #ffffff !important;
 }
 
+/* Product Card Hover Effects */
+.album .card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+}
+
+.album .card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+.album .card img {
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.album .card:hover img {
+    transform: scale(1.05);
+}
+
+.album .item-box {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.album .item-box:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
 /* Product Text Styling - Keep KLUR colors */
 .album .card-text a {
     color: #1a1a1a;
     text-decoration: none;
+    transition: opacity 0.3s ease;
+}
+
+.album .card:hover .card-text a {
+    opacity: 0.8;
 }
 
 .album .card-body p {
     color: #1a1a1a;
+    transition: opacity 0.3s ease;
+}
+
+.album .card:hover .card-body p {
+    opacity: 0.8;
 }
 
 /* Section Headers */
