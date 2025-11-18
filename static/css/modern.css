@@ -131,7 +131,7 @@ a:hover {
    ============================================ */
 
 .navbar {
-    background: linear-gradient(135deg, #9CAF88 0%, #87A96B 50%, #7A9A6A 100%) !important;
+    background: linear-gradient(135deg, #9CAF88 0%, #87A96B 50%, #7A9A6A 100%);
     background-size: 200% 200%;
     position: relative;
     border-bottom: none;
@@ -175,13 +175,13 @@ a:hover {
 .navbar-brand {
     font-weight: 600;
     font-size: 1.25rem;
-    color: #ffffff !important;
+    color: #ffffff;
     transition: all var(--transition-fast);
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .navbar-brand:hover {
-    color: rgba(255, 255, 255, 0.9) !important;
+    color: rgba(255, 255, 255, 0.9);
     transform: translateY(-1px);
 }
 
@@ -196,9 +196,9 @@ a:hover {
 }
 
 .navbar-nav .nav-link {
-    color: rgba(255, 255, 255, 0.95) !important;
+    color: rgba(255, 255, 255, 0.95);
     font-weight: 500;
-    padding: var(--spacing-sm) var(--spacing-md) !important;
+    padding: var(--spacing-sm) var(--spacing-md);
     transition: all var(--transition-fast);
     border-radius: var(--radius-md);
     margin: 0 var(--spacing-xs);
@@ -206,7 +206,7 @@ a:hover {
 }
 
 .navbar-nav .nav-link:hover {
-    color: #ffffff !important;
+    color: #ffffff;
     background-color: rgba(255, 255, 255, 0.15);
     transform: translateY(-1px);
 }
@@ -301,19 +301,19 @@ a:hover {
 
 .btn-alert {
     background-color: transparent;
-    color: var(--color-text-secondary) !important;
+    color: var(--color-text-secondary);
     border: 1px solid var(--color-border);
 }
 
 .btn-alert:hover {
     background-color: rgba(37, 99, 235, 0.08);
-    color: var(--color-primary) !important;
+    color: var(--color-primary);
     border-color: var(--color-primary);
 }
 
 /* Navbar specific button styling */
 .navbar .btn-alert {
-    color: rgba(255, 255, 255, 0.95) !important;
+    color: rgba(255, 255, 255, 0.95);
     border: 1px solid rgba(255, 255, 255, 0.3);
     background-color: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
@@ -322,14 +322,14 @@ a:hover {
 
 .navbar .btn-alert:hover {
     background-color: rgba(255, 255, 255, 0.25);
-    color: #ffffff !important;
+    color: #ffffff;
     border-color: rgba(255, 255, 255, 0.5);
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .navbar .btn-outline-secondary {
-    color: rgba(255, 255, 255, 0.95) !important;
+    color: rgba(255, 255, 255, 0.95);
     border: 1px solid rgba(255, 255, 255, 0.4);
     background-color: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
@@ -338,7 +338,7 @@ a:hover {
 
 .navbar .btn-outline-secondary:hover {
     background-color: rgba(255, 255, 255, 0.25);
-    color: #ffffff !important;
+    color: #ffffff;
     border-color: rgba(255, 255, 255, 0.6);
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
@@ -407,12 +407,12 @@ a:hover {
    ============================================ */
 
 .album {
-    background-color: var(--color-background) !important;
+    background-color: var(--color-background);
     padding: var(--spacing-2xl) 0;
 }
 
 .album .bg-light {
-    background-color: var(--color-background) !important;
+    background-color: var(--color-background);
 }
 
 .album .h5 {
@@ -631,7 +631,7 @@ section.py-4 .lead {
 }
 
 .product-purchase-box .border-bottom {
-    border-bottom: 1px solid var(--color-border) !important;
+    border-bottom: 1px solid var(--color-border);
 }
 
 .product-image-column {
@@ -728,15 +728,15 @@ section.py-4 .lead {
    ============================================ */
 
 .text-muted {
-    color: var(--color-text-muted) !important;
+    color: var(--color-text-muted);
 }
 
 .shadow-md {
-    box-shadow: var(--shadow-md) !important;
+    box-shadow: var(--shadow-md);
 }
 
 .bg-white {
-    background-color: var(--color-background) !important;
+    background-color: var(--color-background);
 }
 
 /* ============================================
