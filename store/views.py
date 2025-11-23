@@ -12,11 +12,22 @@ def store(request):
     
     all_products = Product.objects.filter(stock__gt=0).values()
     
-    p = Paginator(Product.objects.all().filter(stock__gt=0).order_by('pk'), 6)
+    # Get sort parameter from request
+    sort_by = request.GET.get('sort', 'default')
+    
+    # Apply sorting based on parameter
+    if sort_by == 'price_asc':
+        queryset = Product.objects.all().filter(stock__gt=0).order_by('price')
+    elif sort_by == 'price_desc':
+        queryset = Product.objects.all().filter(stock__gt=0).order_by('-price')
+    else:
+        queryset = Product.objects.all().filter(stock__gt=0).order_by('pk')
+    
+    p = Paginator(queryset, 6)
     page = request.GET.get('page')
     products = p.get_page(page)
     
-    context = { 'all_products': all_products, 'products': products }
+    context = { 'all_products': all_products, 'products': products, 'current_sort': sort_by }
     
     return render(request, 'store/store.html', context)
 
@@ -32,9 +43,18 @@ def list_category(request, category_slug=None):
     
     category = get_object_or_404(Category, slug=category_slug)
     
-    products = Product.objects.filter(category=category)
+    # Get sort parameter from request
+    sort_by = request.GET.get('sort', 'default')
     
-    return render(request , 'store/list-category.html', { 'category': category, 'products': products })
+    # Apply sorting based on parameter
+    if sort_by == 'price_asc':
+        products = Product.objects.filter(category=category, stock__gt=0).order_by('price')
+    elif sort_by == 'price_desc':
+        products = Product.objects.filter(category=category, stock__gt=0).order_by('-price')
+    else:
+        products = Product.objects.filter(category=category, stock__gt=0)
+    
+    return render(request , 'store/list-category.html', { 'category': category, 'products': products, 'current_sort': sort_by })
 
 
 def product_info(request, product_slug):
