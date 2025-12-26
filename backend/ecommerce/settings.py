@@ -54,7 +54,9 @@ CSRF_TRUSTED_ORIGINS = [
 if not DEBUG:
     SECURE_SSL_REDIRECT = True  # Redirect all HTTP requests to HTTPS
     SESSION_COOKIE_SECURE = True  # Only send session cookies over HTTPS
+    SESSION_COOKIE_SAMESITE = 'None'  # Allow cookies in cross-site requests
     CSRF_COOKIE_SECURE = True  # Only send CSRF cookies over HTTPS
+    CSRF_COOKIE_SAMESITE = 'None'  # Allow CSRF cookies in cross-site requests
     SECURE_BROWSER_XSS_FILTER = True  # Enable browser's XSS filter
     SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevent MIME type sniffing
     X_FRAME_OPTIONS = 'DENY'  # Prevent clickjacking
@@ -258,6 +260,9 @@ else:
 
 # REST Framework Configuration
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+    ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
@@ -277,3 +282,25 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+# Additional CORS settings for better compatibility
+CORS_ALLOWED_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
