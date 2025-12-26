@@ -1,0 +1,100 @@
+{% include "store/base.html" %}
+
+{% load static %}
+
+{% block content %}
+
+<style>
+
+    body {
+        background-color: #ffffff;
+    }
+
+    .form-layout {
+        background-color: #ffffff;
+        color: #1a1a1a;
+        border: 1px solid #e5e5e5;
+        border-radius: 0;
+    }
+
+    .form-layout h4 {
+        color: #1a1a1a;
+    }
+
+    .form-layout hr {
+        border-top: 1px solid #e5e5e5;
+    }
+
+    .form-layout p,
+    .form-layout li {
+        color: #1a1a1a;
+    }
+
+</style>
+
+<body>
+
+    <br>
+
+    <div class="container bg-white shadow-md p-5 form-layout">
+
+        <h4>Welcome {{user}}</h4>
+
+        <hr>
+        <p>Here you can:</p>
+        <ul>
+            <li> Track Orders </li>
+            <li> Make changes to your account </li>
+        </ul>
+
+    </div>
+
+    <br>
+
+    <div class="container bg-white shadow-md p-5 form-layout">
+
+        <h4> Track your orders </h4>
+
+        <hr>
+
+        <a class="btn btn-primary navbar-btn text-white" type="button"  href="{% url 'track-orders' %}"> Track Orders </a>
+
+
+    </div>
+
+    <br>
+
+    <div class="container bg-white shadow-md p-5 form-layout">
+
+        <h4> Manage your account </h4>
+
+        <hr>
+
+        <a class="btn btn-primary navbar-btn text-white" type="button"  href="{% url 'profile-management' %}"> Profile Management </a>
+
+        <br>
+
+
+    </div>
+
+    <br>
+
+    <div class="container bg-white shadow-md p-5 form-layout">
+
+        <h4> Manage Shipping </h4>
+
+        <hr>
+
+        <a class="btn btn-primary navbar-btn text-white" type="button"  href="{% url 'manage-shipping' %}"> Manage Shipping </a>
+
+        <br>
+
+
+    </div>
+
+    <br>
+
+
+</body>
+
+{% endblock %}

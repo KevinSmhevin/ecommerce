@@ -1,0 +1,55 @@
+# Render Blueprint Configuration
+# This file helps configure your services on Render
+# Note: You'll still need to manually create services and set environment variables
+
+services:
+  # Backend Django API Service
+  - type: web
+    name: pokebin-api
+    env: python
+    region: oregon
+    plan: starter
+    buildCommand: cd backend && pip install -r requirements.txt
+    startCommand: cd backend && gunicorn ecommerce.wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: DEBUG
+        value: False
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DB_NAME
+        sync: false  # Set this manually from your RDS instance
+      - key: DB_USER
+        sync: false  # Set this manually
+      - key: DB_PASSWORD
+        sync: false  # Set this manually
+      - key: DB_HOST
+        sync: false  # Set this manually (RDS endpoint)
+      - key: AWS_STORAGE_BUCKET_NAME
+        sync: false  # Set this manually
+      - key: AWS_ACCESS_KEY_ID
+        sync: false  # Set this manually
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false  # Set this manually
+      - key: AWS_S3_REGION_NAME
+        value: us-east-1  # Update to your region
+      - key: SENDGRID_API_KEY
+        sync: false  # Set this manually
+      - key: DEFAULT_FROM_EMAIL
+        value: noreply@pokebin.app  # Update to your email
+      - key: FRONTEND_URL
+        sync: false  # Set this after frontend deploys (e.g., https://pokebin.onrender.com)
+
+  # Frontend React Static Site
+  - type: web
+    name: pokebin-frontend
+    env: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false  # Set this after backend deploys (e.g., https://pokebin-api.onrender.com)
+      - key: VITE_PAYPAL_CLIENT_ID
+        sync: false  # Set this manually (production PayPal client ID)
+

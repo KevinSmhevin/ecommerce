@@ -1,0 +1,109 @@
+{% include "store/base.html" %}
+
+{% load static %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+    <style>
+
+        body {
+            background-color: #ffffff;
+        }
+
+        .form-layout {
+            background-color: #ffffff;
+            color: #1a1a1a;
+            border: 1px solid #e5e5e5;
+            border-radius: 0;
+        }
+
+        .form-layout h3,
+        .form-layout h5 {
+            color: #1a1a1a;
+        }
+
+        .form-layout hr {
+            border-top: 1px solid #e5e5e5;
+        }
+
+        .form-layout p {
+            color: #1a1a1a;
+        }
+
+    </style>
+
+    <body>
+
+        <br>
+
+        <div class="container bg-white shadow-md p-5 form-layout">
+
+            <h3>Check Order</h3>
+
+            <hr>
+            <br>
+            {% if form.errors %}
+            <div class="alert alert-danger">
+                 {{form.non_field_errors}}
+            </div>
+            {% endif %}
+
+            <form method="POST" action="{% url 'check-order' %}" autocomplete="off">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <p>Order Number:</p>
+                    <input type="number" class="form-control" min="1" max="9999999999" name="order-number">
+
+                </div>
+
+                <button type="submit" class="btn btn-primary navbar-btn text-white"> Check Order </button>
+            
+            </form>
+
+        </div>
+
+        <br><br>
+
+
+        <div class="container bg-white shadow-md p-5 form-layout">
+
+        {% if order %}
+                <h5>Order #: {{order.id}}</h5>
+                <hr>
+
+            {% if order.shipped %}
+                <p>Status: Shipped</p>
+
+                {% if order.courier %}
+
+                    <p>Courier: {{order.courier}}</p>
+                    
+
+                {% endif %}
+
+                {% if order.tracking_number %}
+                    <p>Tracking #: {{order.tracking_number}}</p>
+
+                {% endif %}
+            
+
+            {% else %}
+                <p>Status: Confirmed</p>
+                
+
+            {% endif%}
+
+        {% endif %}
+
+        </div>
+
+    </body>
+
+    <br> <br>
+
+
+
+{% endblock %}

@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-black font-sans antialiased;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary-red text-white px-6 py-2 rounded-md font-medium transition-colors hover:bg-red-700 shadow-sm;
+  }
+  
+  .btn-secondary {
+    @apply bg-black text-white px-6 py-2 rounded-md font-medium transition-colors hover:bg-gray-800 shadow-sm;
+  }
+  
+  .btn-outline {
+    @apply border-2 border-black text-black px-6 py-2 rounded-md font-medium transition-colors hover:bg-black hover:text-white;
+  }
+  
+  .card {
+    @apply bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg hover:border-gray-300 transition-all;
+  }
+  
+  .section-bg {
+    @apply bg-gradient-to-b from-white to-gray-50;
+  }
+  
+  .hero-section {
+    @apply bg-gradient-to-br from-gray-50 via-white to-gray-100;
+  }
+  
+  .logo-text {
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
+    letter-spacing: 0.05em;
+  }
+  
+  .pokeball-icon {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  }
+}
+

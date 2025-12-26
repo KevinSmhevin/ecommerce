@@ -1,0 +1,90 @@
+{% include "store/base.html" %}
+
+{% load static %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+    <style>
+
+        body {
+            background-color: #ffffff;
+        }
+
+        .form-layout {
+            background-color: #ffffff;
+            color: #1a1a1a;
+            border: 1px solid #e5e5e5;
+            border-radius: 0;
+        }
+
+        .form-layout h3 {
+            color: #1a1a1a;
+        }
+
+        .form-layout hr {
+            border-top: 1px solid #e5e5e5;
+        }
+
+        .form-layout a {
+            color: #1a1a1a;
+            text-decoration: none;
+        }
+
+        .form-layout a:hover {
+            color: #1a1a1a;
+            text-decoration: underline;
+            opacity: 0.7;
+        }
+
+    </style>
+
+    <body>
+
+        <br>
+
+        <div class="container bg-white shadow-md p-5 form-layout">
+
+            <h3>Login to your account</h3>
+            <hr>
+            <br>
+            {% if form.errors %}
+                <div class="alert alert-danger">
+                     {{form.non_field_errors}}
+                </div>
+            {% endif %}
+            <form method="POST" autocomplete="off">
+                {% csrf_token %}
+
+                {{ form.username | as_crispy_field }}
+
+                <br>
+
+                {{ form.password | as_crispy_field }}
+
+                <br>
+                <button type="submit" class="btn btn-primary navbar-btn text-white"> <i class="fa fa-sign-in" aria-hidden="true"></i>
+                    &nbsp; Login </button>
+
+
+
+                <br><br>
+
+                <a href="{% url 'register' %}"> Don't have an account? </a>
+
+                <br><br>
+
+                <a href="{% url 'reset_password' %}"> Forgot your password? </a>
+
+            </form>
+
+        </div>
+
+    </body>
+
+    <br> <br>
+
+
+
+{% endblock %}

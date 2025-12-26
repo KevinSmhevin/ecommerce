@@ -1,0 +1,107 @@
+{% extends "./base.html" %}
+
+{% load static %}
+
+
+{% block content %}
+
+<style>
+
+  body {
+      background-color: #ffffff;
+      color: #1a1a1a;
+  }
+
+  .album .bg-light {
+      background-color: #ffffff !important;
+  }
+
+  .album .h5 {
+      color: #1a1a1a;
+  }
+
+  .album hr {
+      border-top: 1px solid #e5e5e5;
+  }
+
+  .card-text a {
+      color: #1a1a1a;
+      text-decoration: none;
+  }
+
+  .card-body h5 {
+      color: #1a1a1a;
+  }
+
+  .item-box:hover {
+      border: 1px solid #e5e5e5;
+      cursor: pointer;
+    }
+
+</style>
+
+<main>
+  
+  <div class="album py-5 bg-light">
+    <div class="container">
+
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-3">
+        <div class="pb-3 h5 mb-0"> {{ category.name | capfirst }} </div>
+        <div class="sort-dropdown-container">
+          <label for="sortSelect" class="form-label me-2 mb-0" style="font-size: 0.875rem; color: var(--color-text-secondary);">Sort by:</label>
+          <select id="sortSelect" class="form-select sort-select" onchange="handleSortChange(this.value)" style="width: auto; display: inline-block;">
+            <option value="default" {% if current_sort == 'default' %}selected{% endif %}>Default</option>
+            <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+            <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+          </select>
+        </div>
+      </div>
+
+      <hr>
+
+      <br>
+
+
+      <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
+
+        {%for product in products %}
+          {% if product.stock > 0 %}
+            <div class="col">
+              <div class="card shadow-sm p-1 item-box">
+                <a class="text-info text-decoration-none" href="{{product.get_absolute_url}}">
+                  <img class="img-fluid img-thumbnail" alt="Responsive image" src="{{product.image.url}}">
+                </a>
+
+                <div class="card-body">
+                  <p class="card-text">
+                    <a class="text-info text-decoration-none" href="{{product.get_absolute_url}}"> {{ product.title }} </a>
+                  </p>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h5> $ {{ product.price }} </h5>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
+
+      </div>
+    </div>
+  </div>
+
+
+</main>
+
+<script>
+function handleSortChange(value) {
+    const url = new URL(window.location.href);
+    if (value === 'default') {
+        url.searchParams.delete('sort');
+    } else {
+        url.searchParams.set('sort', value);
+    }
+    window.location.href = url.toString();
+}
+</script>
+
+{% endblock %}

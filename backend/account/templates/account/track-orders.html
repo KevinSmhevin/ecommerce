@@ -1,0 +1,72 @@
+{% include "store/base.html" %}
+
+{% load static %}
+
+{% block content %}
+
+    <style>
+
+        body {
+            background-color: #ffffff;
+        }
+
+        .form-layout {
+            background-color: #ffffff;
+            color: #1a1a1a;
+            border: 1px solid #e5e5e5;
+            border-radius: 0;
+        }
+
+        .form-layout h3 {
+            color: #1a1a1a;
+        }
+
+        .form-layout hr {
+            border-top: 1px solid #e5e5e5;
+        }
+
+        .form-layout strong {
+            color: #1a1a1a;
+        }
+
+    </style>
+
+    <br>
+<body>
+    <div class="container bg-white shadow-md p-5 form-layout">
+
+            <h3> <i class="fa fa-list-alt" aria-hidden="true"></i> &nbsp; My Orders </h3>
+
+            <hr>
+    </div>
+
+    <br>
+
+    <div class="container bg-white shadow-md p-5 form-layout">
+        {% for order in orders %}
+
+        <strong> <i class="fa fa-list-alt" aria-hidden="true"></i> &nbsp; Order ID # {{order.id}} </strong>
+
+        <br>
+        <br>
+
+        {{order.product}}
+
+        <br>
+        <br>
+
+        Quantity x {{order.quantity}}
+
+        <br>
+        <br>
+
+        $ {{order.price}}
+
+        <hr>
+
+        {% endfor %}
+
+    </div>
+
+</body>
+{% endblock %}

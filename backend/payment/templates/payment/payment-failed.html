@@ -1,0 +1,45 @@
+{% include "store/base.html" %}
+
+{% load static %}
+
+{% block content %}
+
+<style>
+
+    body {
+        background-color: #F0FFF0;
+    }
+
+</style>
+
+    <body>
+
+        <br>
+
+        <div class="container bg-white shadow-md p-5 form-layout text-center">
+
+            <i class="text-danger fa fa-frown-o fa-3x" aria-hidden="true"></i>
+
+            <br>
+            <br>
+
+            <h5> <strong> Payment Failed </strong></h5>
+
+            <hr>
+
+            <p> Please try again. </p>
+
+            <p> Please contact admin for further issues.</p>
+
+
+
+            <a href="{% url 'cart-summary' %}"> Return to cart  </a>
+            <br>
+            <br>
+            <a href="{% url 'store' %}"> Return to home </a>
+
+        </div>
+
+    </body>
+
+{% endblock %}

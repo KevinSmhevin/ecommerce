@@ -1,0 +1,54 @@
+{% include "store/base.html" %}
+
+{% load static %}
+
+{% block content %}
+
+<style>
+
+    body {
+        background-color: #ffffff;
+    }
+
+    .form-layout {
+        background-color: #ffffff;
+        color: #1a1a1a;
+    }
+
+    .form-layout h5,
+    .form-layout strong {
+        color: #1a1a1a;
+    }
+
+    .form-layout hr {
+        border-top: 1px solid #e5e5e5;
+    }
+
+    .form-layout p {
+        color: #1a1a1a;
+    }
+
+</style>
+
+    <body>
+
+        <br>
+
+        <div class="container bg-white shadow-md p-5 form-layout text-center">
+
+            <i class="fa fa-envelope fa-3x" aria-hidden="true"></i>
+
+            <br>
+            <br>
+
+            <h5> <strong> A verification link was sent to your email! </strong></h5>
+
+            <hr>
+
+            <p>Please check your email.</p>
+
+        </div>
+
+    </body>
+
+{% endblock %}

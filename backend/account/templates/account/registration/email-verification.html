@@ -1,0 +1,11 @@
+{% autoescape off %}
+
+Hi,
+
+Thank you for registering on The Pokebin.
+
+Please verify your email by clicking the link below:
+
+https://{{domain}}{% url 'email-verification'  uidb64=uid token=token %}
+
+{% endautoescape %}
