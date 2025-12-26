@@ -3,8 +3,6 @@ import axios from '../config/axios'
 
 const AppContext = createContext()
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api'
-
 export const useApp = () => {
   const context = useContext(AppContext)
   if (!context) {
@@ -22,7 +20,8 @@ export const AppProvider = ({ children }) => {
   const fetchCategories = async () => {
     try {
       setLoading(true)
-      const response = await axios.get(`${API_BASE_URL}/categories/`)
+      // Use relative path - axios baseURL is already configured
+      const response = await axios.get('/api/categories/')
       // Handle both paginated and non-paginated responses
       const categoriesData = response.data.results || response.data
       setCategories(Array.isArray(categoriesData) ? categoriesData : [])
@@ -37,7 +36,8 @@ export const AppProvider = ({ children }) => {
   const fetchProducts = async (params = {}) => {
     try {
       setLoading(true)
-      const response = await axios.get(`${API_BASE_URL}/products/`, { params })
+      // Use relative path - axios baseURL is already configured
+      const response = await axios.get('/api/products/', { params })
       setProducts(response.data.results || response.data)
     } catch (err) {
       setError(err.message)
@@ -49,7 +49,8 @@ export const AppProvider = ({ children }) => {
   const fetchProductBySlug = async (slug) => {
     try {
       setLoading(true)
-      const response = await axios.get(`${API_BASE_URL}/products/`)
+      // Use relative path - axios baseURL is already configured
+      const response = await axios.get('/api/products/')
       const allProducts = response.data.results || response.data
       const product = allProducts.find(p => p.slug === slug)
       return product
@@ -64,7 +65,8 @@ export const AppProvider = ({ children }) => {
   const fetchCategoryBySlug = async (slug) => {
     try {
       setLoading(true)
-      const response = await axios.get(`${API_BASE_URL}/categories/`)
+      // Use relative path - axios baseURL is already configured
+      const response = await axios.get('/api/categories/')
       const categoriesData = response.data.results || response.data
       const categoriesArray = Array.isArray(categoriesData) ? categoriesData : []
       const category = categoriesArray.find(c => c.slug === slug)

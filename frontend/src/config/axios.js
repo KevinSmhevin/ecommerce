@@ -1,12 +1,10 @@
 import axios from 'axios'
 
-// Get API URL from environment variable, fallback to relative paths for production
-const API_URL = import.meta.env.VITE_API_URL || ''
+// Get API URL from environment variable, fallback to production API URL
+const API_URL = import.meta.env.VITE_API_URL || 'https://pokebin-api.onrender.com'
 
-// Configure base URL if provided
-if (API_URL) {
-  axios.defaults.baseURL = API_URL
-}
+// Configure base URL
+axios.defaults.baseURL = API_URL
 
 // Configure axios to send credentials (cookies) with all requests
 axios.defaults.withCredentials = true

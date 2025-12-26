@@ -34,7 +34,7 @@ SECRET_KEY = env('SECRET_KEY')
 # Set to True for local development, False for production
 DEBUG = env.bool('DEBUG', default=True)
 
-ALLOWED_HOSTS = ['pokebin.onrender.com','*']
+ALLOWED_HOSTS = ['pokebin.onrender.com','*', 'ecommerce-24dt.onrender.com', 'www.pokebin.app', 'pokebin.app']
 
 # Get frontend URL from environment variable for CSRF trusted origins
 FRONTEND_URL = env('FRONTEND_URL', default='http://localhost:5173')
@@ -44,7 +44,20 @@ CSRF_TRUSTED_ORIGINS = [
     FRONTEND_URL,
     'http://localhost:5173',
     'http://127.0.0.1:5173',
+    'https://ecommerce-24dt.onrender.com/',
+    'https://www.pokebin.app/',
+    'https://pokebin.app/'
 ]
+
+# Security Settings for HTTPS (Production only)
+# These settings ensure secure cookies and SSL redirects in production
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True  # Redirect all HTTP requests to HTTPS
+    SESSION_COOKIE_SECURE = True  # Only send session cookies over HTTPS
+    CSRF_COOKIE_SECURE = True  # Only send CSRF cookies over HTTPS
+    SECURE_BROWSER_XSS_FILTER = True  # Enable browser's XSS filter
+    SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevent MIME type sniffing
+    X_FRAME_OPTIONS = 'DENY'  # Prevent clickjacking
 
 # Application definition
 
