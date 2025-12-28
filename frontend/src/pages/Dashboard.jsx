@@ -55,7 +55,7 @@ const Dashboard = () => {
           <p className="text-gray-600">Welcome back, {user.username}!</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Link
             to="/track-orders"
             className="bg-white rounded-lg shadow-sm border-2 border-gray-200 p-6 hover:border-primary-red transition-colors"
@@ -99,18 +99,23 @@ const Dashboard = () => {
             </div>
             <p className="text-gray-600">Manage your shipping address</p>
           </Link>
-        </div>
 
-        <div className="bg-white rounded-lg shadow-sm border-2 border-gray-200 p-6">
-          <h2 className="text-2xl font-bold text-black mb-4">Account Information</h2>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center py-2 border-b border-gray-200">
-              <span className="text-gray-600">Username:</span>
-              <span className="font-medium text-black">{user.username}</span>
+          <div className="bg-white rounded-lg shadow-sm border-2 border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-black">Account Information</h2>
+              <svg className="w-6 h-6 text-primary-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-200">
-              <span className="text-gray-600">Email:</span>
-              <span className="font-medium text-black">{user.email}</span>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                <span className="text-gray-600">Username:</span>
+                <span className="font-medium text-black">{user.username}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                <span className="text-gray-600">Email:</span>
+                <span className="font-medium text-black">{user.email}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -120,5 +125,6 @@ const Dashboard = () => {
 }
 
 export default Dashboard
+
 
 
