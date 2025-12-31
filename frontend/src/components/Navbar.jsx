@@ -1,20 +1,15 @@
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
-import { useApp } from '../context/AppContext'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import Logo from './Logo'
 
 const Navbar = () => {
-  const { categories } = useApp()
   const { getCartItemCount } = useCart()
   const { user, logout } = useAuth()
-  const [dropdownOpen, setDropdownOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   
-  // Ensure categories is always an array
-  const categoriesList = Array.isArray(categories) ? categories : []
   const cartCount = getCartItemCount()
 
   const handleLogout = async (e) => {
@@ -34,7 +29,6 @@ const Navbar = () => {
 
   const closeMobileMenu = () => {
     setMobileMenuOpen(false)
-    setDropdownOpen(false)
     setUserMenuOpen(false)
   }
 
@@ -49,80 +43,6 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-6">
-            <div className="relative">
-              <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    setDropdownOpen(!dropdownOpen)
-                  } else if (e.key === 'Escape') {
-                    setDropdownOpen(false)
-                  }
-                }}
-                aria-expanded={dropdownOpen}
-                aria-haspopup="true"
-                className="flex items-center space-x-1 text-black font-medium hover:text-primary-red transition-colors focus:outline-none focus:ring-2 focus:ring-primary-red focus:ring-offset-2 rounded"
-                onBlur={() => setTimeout(() => setDropdownOpen(false), 200)}
-              >
-                <span>Categories</span>
-                <svg
-                  className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {dropdownOpen && (
-                <div 
-                  className="absolute top-full left-0 mt-2 w-48 bg-white border-2 border-gray-300 rounded-lg shadow-xl z-50 overflow-hidden"
-                  role="menu"
-                  aria-label="Categories menu"
-                >
-                  <Link
-                    to="/"
-                    role="menuitem"
-                    tabIndex={0}
-                    className="block px-4 py-3 text-black hover:bg-gray-100 hover:text-primary-red transition-colors border-b border-gray-200 focus:outline-none focus:bg-gray-100 focus:text-primary-red"
-                    onClick={() => setDropdownOpen(false)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        setDropdownOpen(false)
-                      } else if (e.key === 'Escape') {
-                        setDropdownOpen(false)
-                      }
-                    }}
-                  >
-                    All
-                  </Link>
-                  {categoriesList.map((category, index) => (
-                    <Link
-                      key={category.id}
-                      to={`/category/${category.slug}`}
-                      role="menuitem"
-                      tabIndex={0}
-                      className={`block px-4 py-3 text-black hover:bg-gray-100 hover:text-primary-red transition-colors focus:outline-none focus:bg-gray-100 focus:text-primary-red ${
-                        index !== categoriesList.length - 1 ? 'border-b border-gray-200' : ''
-                      }`}
-                      onClick={() => setDropdownOpen(false)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          setDropdownOpen(false)
-                        } else if (e.key === 'Escape') {
-                          setDropdownOpen(false)
-                        }
-                      }}
-                    >
-                      {category.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-
             <Link
               to="/cart"
               className="relative text-black font-medium hover:text-primary-red transition-colors"
@@ -143,14 +63,7 @@ const Navbar = () => {
             </Link>
 
             {user ? (
-              <>
-                <Link
-                  to="/dashboard"
-                  className="text-black font-medium hover:text-primary-red transition-colors"
-                >
-                  Dashboard
-                </Link>
-                <div className="relative">
+              <div className="relative">
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
                     onKeyDown={(e) => {
@@ -188,6 +101,14 @@ const Navbar = () => {
                         <p className="text-sm font-medium text-black">{user.username}</p>
                         <p className="text-xs text-gray-600">{user.email}</p>
                       </div>
+                      <Link
+                        to="/dashboard"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="block w-full text-left px-4 py-3 text-black hover:bg-gray-100 hover:text-primary-red transition-colors focus:outline-none focus:bg-gray-100 focus:text-primary-red border-b border-gray-200"
+                        role="menuitem"
+                      >
+                        Dashboard
+                      </Link>
                       <button
                         type="button"
                         onClick={handleLogout}
@@ -207,7 +128,6 @@ const Navbar = () => {
                     </div>
                   )}
                 </div>
-              </>
             ) : (
               <>
                 <Link
@@ -265,73 +185,6 @@ const Navbar = () => {
         {mobileMenuOpen && (
           <div className="lg:hidden border-t-2 border-gray-200 py-4">
             <div className="space-y-1">
-              {/* Categories */}
-              <div>
-                <button
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      setDropdownOpen(!dropdownOpen)
-                    } else if (e.key === 'Escape') {
-                      setDropdownOpen(false)
-                    }
-                  }}
-                  aria-expanded={dropdownOpen}
-                  aria-haspopup="true"
-                  className="w-full flex items-center justify-between px-4 py-3 text-black font-medium hover:bg-gray-100 transition-colors focus:outline-none focus:bg-gray-100 focus:ring-2 focus:ring-primary-red focus:ring-inset"
-                >
-                  <span>Categories</span>
-                  <svg
-                    className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                {dropdownOpen && (
-                  <div className="bg-gray-50" role="menu" aria-label="Categories menu">
-                    <Link
-                      to="/"
-                      role="menuitem"
-                      tabIndex={0}
-                      className="block px-8 py-2 text-gray-700 hover:bg-gray-100 hover:text-primary-red transition-colors focus:outline-none focus:bg-gray-100 focus:text-primary-red"
-                      onClick={closeMobileMenu}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          closeMobileMenu()
-                        } else if (e.key === 'Escape') {
-                          setDropdownOpen(false)
-                        }
-                      }}
-                    >
-                      All
-                    </Link>
-                    {categoriesList.map((category) => (
-                      <Link
-                        key={category.id}
-                        to={`/category/${category.slug}`}
-                        role="menuitem"
-                        tabIndex={0}
-                        className="block px-8 py-2 text-gray-700 hover:bg-gray-100 hover:text-primary-red transition-colors focus:outline-none focus:bg-gray-100 focus:text-primary-red"
-                        onClick={closeMobileMenu}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            closeMobileMenu()
-                          } else if (e.key === 'Escape') {
-                            setDropdownOpen(false)
-                          }
-                        }}
-                      >
-                        {category.name}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-
               {/* Check Order */}
               <Link
                 to="/check-order"
@@ -341,17 +194,6 @@ const Navbar = () => {
                 Check Order
               </Link>
 
-              {/* Dashboard */}
-              {user && (
-                <Link
-                  to="/dashboard"
-                  className="block px-4 py-3 text-black font-medium hover:bg-gray-100 hover:text-primary-red transition-colors"
-                  onClick={closeMobileMenu}
-                >
-                  Dashboard
-                </Link>
-              )}
-
               {/* User Section */}
               {user ? (
                 <>
@@ -359,6 +201,13 @@ const Navbar = () => {
                     <p className="text-sm font-medium text-black">{user.username}</p>
                     <p className="text-xs text-gray-600">{user.email}</p>
                   </div>
+                  <Link
+                    to="/dashboard"
+                    className="block px-4 py-3 text-black font-medium hover:bg-gray-100 hover:text-primary-red transition-colors"
+                    onClick={closeMobileMenu}
+                  >
+                    Dashboard
+                  </Link>
                   <button
                     type="button"
                     onClick={handleLogout}

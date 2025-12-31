@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import axios from '../config/axios'
 import Pagination from '../components/Pagination'
+import { useApp } from '../context/AppContext'
 
 const CategoryPage = () => {
   const { slug } = useParams()
+  const navigate = useNavigate()
+  const { categories } = useApp()
   const [category, setCategory] = useState(null)
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -12,6 +15,9 @@ const CategoryPage = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalCount, setTotalCount] = useState(0)
+  
+  // Ensure categories is always an array
+  const categoriesList = Array.isArray(categories) ? categories : []
 
   useEffect(() => {
     setCurrentPage(1) // Reset to page 1 when category or sorting changes
@@ -80,6 +86,15 @@ const CategoryPage = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  const handleCategoryChange = (e) => {
+    const categorySlug = e.target.value
+    if (categorySlug === 'all') {
+      navigate('/')
+    } else {
+      navigate(`/category/${categorySlug}`)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -104,21 +119,31 @@ const CategoryPage = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-          <h1 className="text-4xl font-bold text-black mb-4">{category.name}</h1>
-          <p className="text-gray-600">Browse products in this category</p>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-          <div className="flex justify-end">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="border-2 border-gray-300 rounded-md px-4 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red transition-colors"
-            >
-              <option value="default">Default</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-            </select>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h2 className="text-2xl font-bold text-black">{category.name}</h2>
+            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+              <select
+                value={slug}
+                onChange={handleCategoryChange}
+                className="border-2 border-gray-300 rounded-md px-4 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red transition-colors w-full sm:w-auto"
+              >
+                <option value="all">All Categories</option>
+                {categoriesList.map((cat) => (
+                  <option key={cat.id} value={cat.slug}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="border-2 border-gray-300 rounded-md px-4 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red transition-colors w-full sm:w-auto"
+              >
+                <option value="default">Default</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
+              </select>
+            </div>
           </div>
         </div>
 

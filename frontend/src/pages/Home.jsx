@@ -1,18 +1,23 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import axios from '../config/axios'
 import Logo from '../components/Logo'
 import Pagination from '../components/Pagination'
 
 const Home = () => {
-  const { loading } = useApp()
+  const { loading, categories } = useApp()
+  const navigate = useNavigate()
   const [products, setProducts] = useState([])
   const [sortBy, setSortBy] = useState('default')
+  const [selectedCategory, setSelectedCategory] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalCount, setTotalCount] = useState(0)
   const [pageLoading, setPageLoading] = useState(false)
+  
+  // Ensure categories is always an array
+  const categoriesList = Array.isArray(categories) ? categories : []
 
   useEffect(() => {
     setCurrentPage(1) // Reset to page 1 when sorting changes
@@ -21,6 +26,17 @@ const Home = () => {
   useEffect(() => {
     loadProducts()
   }, [sortBy, currentPage])
+
+  const handleCategoryChange = (e) => {
+    const categorySlug = e.target.value
+    if (categorySlug === 'all') {
+      setSelectedCategory('all')
+      // Stay on home page
+    } else {
+      // Navigate to category page
+      navigate(`/category/${categorySlug}`)
+    }
+  }
 
   const loadProducts = async () => {
     try {
@@ -72,17 +88,31 @@ const Home = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 className="text-2xl font-bold text-black">All Products</h2>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="border-2 border-gray-300 rounded-md px-4 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red transition-colors"
-            >
-              <option value="default">Default</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-            </select>
+            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+              <select
+                value={selectedCategory}
+                onChange={handleCategoryChange}
+                className="border-2 border-gray-300 rounded-md px-4 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red transition-colors w-full sm:w-auto"
+              >
+                <option value="all">All Categories</option>
+                {categoriesList.map((category) => (
+                  <option key={category.id} value={category.slug}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="border-2 border-gray-300 rounded-md px-4 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red transition-colors w-full sm:w-auto"
+              >
+                <option value="default">Default</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
+              </select>
+            </div>
           </div>
         </div>
 
