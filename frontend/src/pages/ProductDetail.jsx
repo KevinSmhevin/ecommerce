@@ -5,11 +5,12 @@ import { useCart } from '../context/CartContext'
 
 const ProductDetail = () => {
   const { slug } = useParams()
-  const { addToCart } = useCart()
+  const { addToCart, cartItems } = useCart()
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [addedToCart, setAddedToCart] = useState(false)
+  const [cartMessage, setCartMessage] = useState('')
 
   useEffect(() => {
     fetchProduct()
@@ -178,11 +179,33 @@ const ProductDetail = () => {
                 </div>
               </div>
 
+              {cartMessage && (
+                <div className={`mb-4 px-4 py-2 rounded-md text-sm ${
+                  cartMessage.includes('maximum') 
+                    ? 'bg-yellow-50 border-2 border-yellow-200 text-yellow-700'
+                    : 'bg-green-50 border-2 border-green-200 text-green-700'
+                }`}>
+                  {cartMessage}
+                </div>
+              )}
               <button
                 onClick={() => {
+                  // Check if product is already in cart and if adding would exceed stock
+                  const existingItem = cartItems.find((item) => item.id === product.id)
+                  const currentQuantity = existingItem ? existingItem.quantity : 0
+                  
+                  if (currentQuantity >= product.stock) {
+                    setCartMessage(`Maximum quantity (${product.stock}) already in cart`)
+                    setTimeout(() => setCartMessage(''), 3000)
+                    return
+                  }
+                  
                   addToCart(product, 1)
                   setAddedToCart(true)
-                  setTimeout(() => setAddedToCart(false), 2000)
+                  setCartMessage('')
+                  setTimeout(() => {
+                    setAddedToCart(false)
+                  }, 2000)
                 }}
                 disabled={product.stock === 0}
                 className={`w-full py-3 px-6 rounded-lg font-bold text-white transition-all duration-200 ${

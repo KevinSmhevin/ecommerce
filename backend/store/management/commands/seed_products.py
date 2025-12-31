@@ -1,13 +1,31 @@
 from django.core.management.base import BaseCommand
+from django.core.files import File
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.conf import settings
+import os
 
 from store.models import Category, Product
 
 
 class Command(BaseCommand):
     help = "Seed the database with sample categories and products for local development."
+    
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--clear',
+            action='store_true',
+            help='Clear existing products before seeding',
+        )
 
     def handle(self, *args, **options):
         self.stdout.write(self.style.WARNING("Seeding sample categories and products..."))
+        
+        # Clear existing products if --clear flag is set
+        if options['clear']:
+            self.stdout.write(self.style.WARNING("Clearing existing products..."))
+            Product.objects.all().delete()
+            self.stdout.write(self.style.SUCCESS("Cleared existing products."))
 
         categories_data = [
             {"name": "Cards", "slug": "cards"},
@@ -196,33 +214,113 @@ class Command(BaseCommand):
         ]
 
         created_count = 0
+        error_count = 0
 
         for data in products_data:
-            category = categories.get(data["category_slug"])
-            
-            # Get images list, default to single image if not provided
-            images = data.get("images", ["images/RayquazaPonchoPikachu.jpg"])
+            try:
+                category = categories.get(data["category_slug"])
+                
+                if not category:
+                    self.stdout.write(
+                        self.style.ERROR(f"Category '{data['category_slug']}' not found for product '{data['title']}'")
+                    )
+                    error_count += 1
+                    continue
+                
+                # Get images list, default to single image if not provided
+                images = data.get("images", ["images/RayquazaPonchoPikachu.jpg"])
+                
+                # Helper function to get image file object
+                def get_image_file(image_path):
+                    """Get a File object for the image path, or None if file doesn't exist."""
+                    # Image paths in seed data are like "images/RayquazaPonchoPikachu.jpg"
+                    # MEDIA_ROOT is BASE_DIR / 'static/media'
+                    # So full path should be: static/media/images/RayquazaPonchoPikachu.jpg
+                    
+                    full_path = None
+                    file_name = None
+                    
+                    # Try the path as-is (relative to MEDIA_ROOT)
+                    test_path = settings.MEDIA_ROOT / image_path
+                    if os.path.exists(test_path):
+                        full_path = test_path
+                        file_name = image_path
+                    else:
+                        # Try alternative: if image_path is just a filename, add images/ prefix
+                        if not '/' in image_path:
+                            alt_path = settings.MEDIA_ROOT / "images" / image_path
+                            if os.path.exists(alt_path):
+                                full_path = alt_path
+                                file_name = f"images/{image_path}"
+                        else:
+                            # Try with just the filename
+                            filename = os.path.basename(image_path)
+                            alt_path2 = settings.MEDIA_ROOT / "images" / filename
+                            if os.path.exists(alt_path2):
+                                full_path = alt_path2
+                                file_name = f"images/{filename}"
+                    
+                    if full_path and file_name:
+                        # Read file content into memory to avoid "seek of closed file" error
+                        with open(full_path, 'rb') as f:
+                            file_content = f.read()
+                        # Create ContentFile from the content (keeps it in memory)
+                        return ContentFile(file_content, name=file_name)
+                    
+                    return None
+                
+                # Get image files
+                image_file = get_image_file(images[0] if len(images) > 0 else "images/RayquazaPonchoPikachu.jpg")
+                image2_file = get_image_file(images[1]) if len(images) > 1 else None
+                image3_file = get_image_file(images[2]) if len(images) > 2 else None
+                image4_file = get_image_file(images[3]) if len(images) > 3 else None
+                
+                if not image_file:
+                    self.stdout.write(
+                        self.style.ERROR(f"Image file not found for product '{data['title']}'")
+                    )
+                    error_count += 1
+                    continue
+                
+                product, created = Product.objects.get_or_create(
+                    slug=data["slug"],
+                    defaults={
+                        "category": category,
+                        "title": data["title"],
+                        "brand": data["brand"],
+                        "description": data["description"],
+                        "price": data["price"],
+                        "image": image_file,
+                        "image2": image2_file,
+                        "image3": image3_file,
+                        "image4": image4_file,
+                        "stock": data["stock"],
+                    },
+                )
 
-            product, created = Product.objects.get_or_create(
-                slug=data["slug"],
-                defaults={
-                    "category": category,
-                    "title": data["title"],
-                    "brand": data["brand"],
-                    "description": data["description"],
-                    "price": data["price"],
-                    "image": images[0] if len(images) > 0 else "images/RayquazaPonchoPikachu.jpg",
-                    "image2": images[1] if len(images) > 1 else None,
-                    "image3": images[2] if len(images) > 2 else None,
-                    "image4": images[3] if len(images) > 3 else None,
-                    "stock": data["stock"],
-                },
-            )
+                if created:
+                    created_count += 1
+                    self.stdout.write(
+                        self.style.SUCCESS(f"✓ Created: {data['title']}")
+                    )
+                else:
+                    self.stdout.write(
+                        self.style.WARNING(f"⊘ Already exists: {data['title']}")
+                    )
+            except Exception as e:
+                self.stdout.write(
+                    self.style.ERROR(f"✗ Error creating {data.get('title', 'unknown')}: {str(e)}")
+                )
+                error_count += 1
 
-            if created:
-                created_count += 1
-
-        self.stdout.write(self.style.SUCCESS(f"Seed complete. Created {created_count} products."))
+        self.stdout.write(self.style.SUCCESS(f"\nSeed complete!"))
+        self.stdout.write(self.style.SUCCESS(f"Created: {created_count} products"))
+        if error_count > 0:
+            self.stdout.write(self.style.ERROR(f"Errors: {error_count} products"))
+        
+        # Show total count
+        total_products = Product.objects.count()
+        self.stdout.write(self.style.SUCCESS(f"Total products in database: {total_products}"))
 
 
 

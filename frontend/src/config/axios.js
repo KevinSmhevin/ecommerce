@@ -1,9 +1,11 @@
 import axios from 'axios'
 
-// Get API URL from environment variable, fallback to production API URL
-const API_URL = import.meta.env.VITE_API_URL || 'https://pokebin-api.onrender.com'
+// Get API URL from environment variable
+// For local development, use empty string to rely on Vite proxy
+// For production, use the production API URL
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'https://pokebin-api.onrender.com')
 
-// Configure base URL
+// Configure base URL (empty string means use relative URLs, which will use Vite proxy in dev)
 axios.defaults.baseURL = API_URL
 
 // Configure axios to send credentials (cookies) with all requests

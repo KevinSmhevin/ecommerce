@@ -34,7 +34,14 @@ SECRET_KEY = env('SECRET_KEY')
 # Set to True for local development, False for production
 DEBUG = env.bool('DEBUG', default=True)
 
-ALLOWED_HOSTS = ['pokebin.onrender.com', 'ecommerce-24dt.onrender.com', 'www.pokebin.app', 'pokebin.app']
+ALLOWED_HOSTS = [
+    'pokebin.onrender.com', 
+    'ecommerce-24dt.onrender.com', 
+    'www.pokebin.app', 
+    'pokebin.app',
+    '127.0.0.1',
+    'localhost',
+]
 
 # Get frontend URL from environment variable for CSRF trusted origins
 FRONTEND_URL = env('FRONTEND_URL', default='http://localhost:5173')

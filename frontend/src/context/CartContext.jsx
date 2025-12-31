@@ -33,16 +33,32 @@ export const CartProvider = ({ children }) => {
   const addToCart = (product, quantity = 1) => {
     setCartItems((prevItems) => {
       const existingItem = prevItems.find((item) => item.id === product.id)
+      const availableStock = product.stock || 0
       
       if (existingItem) {
+        const newQuantity = existingItem.quantity + quantity
+        // Don't allow adding more than available stock
+        if (newQuantity > availableStock) {
+          return prevItems.map((item) =>
+            item.id === product.id
+              ? { ...item, quantity: availableStock }
+              : item
+          )
+        }
         return prevItems.map((item) =>
           item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: newQuantity }
             : item
         )
       }
       
-      return [...prevItems, { ...product, quantity }]
+      // Don't allow adding more than available stock for new items
+      const finalQuantity = Math.min(quantity, availableStock)
+      if (finalQuantity <= 0) {
+        return prevItems // Don't add if no stock available
+      }
+      
+      return [...prevItems, { ...product, quantity: finalQuantity }]
     })
   }
 
@@ -57,9 +73,15 @@ export const CartProvider = ({ children }) => {
     }
     
     setCartItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === productId ? { ...item, quantity } : item
-      )
+      prevItems.map((item) => {
+        if (item.id === productId) {
+          const availableStock = item.stock || 0
+          // Don't allow quantity to exceed available stock
+          const finalQuantity = Math.min(quantity, availableStock)
+          return { ...item, quantity: finalQuantity }
+        }
+        return item
+      })
     )
   }
 
@@ -87,6 +109,7 @@ export const CartProvider = ({ children }) => {
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
 }
+
 
 
 

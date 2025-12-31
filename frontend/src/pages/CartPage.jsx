@@ -68,24 +68,34 @@ const CartPage = () => {
                       ${item.price}
                     </p>
 
-                    <div className="flex items-center gap-4 mt-4">
-                      <label className="text-sm text-gray-600">Quantity:</label>
-                      <div className="flex items-center border-2 border-black rounded-md">
-                        <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="px-3 py-1 hover:bg-gray-100 transition-colors"
-                        >
-                          -
-                        </button>
-                        <span className="px-4 py-1 border-x-2 border-black">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="px-3 py-1 hover:bg-gray-100 transition-colors"
-                        >
-                          +
-                        </button>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 mt-4">
+                      <div className="flex items-center gap-4">
+                        <label className="text-sm text-gray-600">Quantity:</label>
+                        <div className="flex items-center border-2 border-black rounded-md">
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            className="px-3 py-1 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={item.quantity <= 1}
+                          >
+                            -
+                          </button>
+                          <span className="px-4 py-1 border-x-2 border-black">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            className="px-3 py-1 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={!item.stock || item.quantity >= item.stock}
+                            title={item.stock && item.quantity >= item.stock ? 'Maximum quantity reached' : ''}
+                          >
+                            +
+                          </button>
+                        </div>
+                        {item.stock !== undefined && (
+                          <span className="text-xs text-gray-500">
+                            (Max: {item.stock})
+                          </span>
+                        )}
                       </div>
                       <button
                         onClick={() => removeFromCart(item.id)}
