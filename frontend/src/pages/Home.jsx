@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import axios from '../config/axios'
-import Logo from '../components/Logo'
+import Banner from '../components/Banner'
 import Pagination from '../components/Pagination'
 
 const Home = () => {
@@ -76,17 +76,21 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="hero-section py-16 mb-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="flex justify-center mb-6">
-            <Logo size="large" />
-          </div>
-          <h1 className="text-5xl font-bold text-black mb-4">Pokemon Cards and More!</h1>
-          <p className="text-xl text-gray-600">Take a look around.</p>
-        </div>
+      {/* Hero Banner */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12">
+        <Banner
+          image="/banners/all-collections.png"
+          title="Shop All Collections"
+          subtitle="Explore our premium selection of Pokemon cards and collectibles"
+          buttonText="Shop Now"
+          buttonLink="#products"
+          height="h-[400px] md:h-[500px] lg:h-[600px]"
+          textPosition="center"
+          overlay="medium"
+        />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div id="products" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 scroll-mt-8">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 className="text-2xl font-bold text-black">All Products</h2>
