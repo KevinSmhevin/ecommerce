@@ -74,6 +74,24 @@ const Home = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  const miniBanners = [
+    {
+      title: 'Graded Pokemon English',
+      image: '/banners/mini/graded-pokemon-english.png',
+      link: '/category/graded-pokemon-english',
+    },
+    {
+      title: 'Graded Pokemon Japanese',
+      image: '/banners/mini/graded-pokemon-japanese.png',
+      link: '/category/graded-pokemon-japanese',
+    },
+    {
+      title: 'Graded One Piece',
+      image: '/banners/mini/graded-one-piece.png',
+      link: '/category/graded-one-piece',
+    },
+  ]
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Banner */}
@@ -88,6 +106,30 @@ const Home = () => {
           textPosition="center"
           overlay="medium"
         />
+      </div>
+
+      {/* Mini Category Banners */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {miniBanners.map((banner) => (
+            <Link
+              key={banner.title}
+              to={banner.link}
+              className="group relative h-44 rounded-lg overflow-hidden border-2 border-gray-200 shadow-md focus:outline-none focus:ring-2 focus:ring-primary-red focus:ring-offset-2"
+              aria-label={`Shop ${banner.title}`}
+            >
+              <img
+                src={banner.image}
+                alt={banner.title}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-black/35 group-hover:bg-black/45 transition-colors" />
+              <div className="relative h-full flex items-end p-4">
+                <h3 className="text-white text-xl font-bold drop-shadow-md">{banner.title}</h3>
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
 
       <div id="products" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 scroll-mt-8">
