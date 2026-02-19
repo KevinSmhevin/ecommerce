@@ -249,10 +249,16 @@ if USE_R2:
     AWS_STORAGE_BUCKET_NAME = R2_BUCKET_NAME
     AWS_S3_REGION_NAME = 'auto'
     AWS_S3_ENDPOINT_URL = f'https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com'
+    AWS_S3_ADDRESSING_STYLE = 'virtual'
     AWS_S3_SIGNATURE_VERSION = 's3v4'
     AWS_DEFAULT_ACL = None
     AWS_QUERYSTRING_AUTH = False
     AWS_S3_FILE_OVERWRITE = False
+
+    # Use a public asset hostname for generated file URLs.
+    # - Prefer custom domain when provided.
+    # - Fallback to Cloudflare's public r2.dev domain.
+    AWS_S3_CUSTOM_DOMAIN = R2_CUSTOM_DOMAIN or f'{R2_BUCKET_NAME}.r2.dev'
 
     STORAGES = {
         "default": {
@@ -263,10 +269,7 @@ if USE_R2:
         },
     }
 
-    if R2_CUSTOM_DOMAIN:
-        MEDIA_URL = f'https://{R2_CUSTOM_DOMAIN}/'
-    else:
-        MEDIA_URL = f'https://{R2_BUCKET_NAME}.{R2_ACCOUNT_ID}.r2.cloudflarestorage.com/'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
 
 elif AWS_STORAGE_BUCKET_NAME:
     AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
