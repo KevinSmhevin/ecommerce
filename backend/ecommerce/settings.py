@@ -32,7 +32,10 @@ SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Set to True for local development, False for production
-DEBUG = env.bool('DEBUG', default=True)
+try:
+    DEBUG = env.bool('DEBUG')
+except Exception:
+    DEBUG = True
 
 ALLOWED_HOSTS = [
     'pokebin.onrender.com', 
@@ -44,7 +47,10 @@ ALLOWED_HOSTS = [
 ]
 
 # Get frontend URL from environment variable for CSRF trusted origins
-FRONTEND_URL = env('FRONTEND_URL', default='http://localhost:5173')
+try:
+    FRONTEND_URL = env('FRONTEND_URL')
+except Exception:
+    FRONTEND_URL = 'http://localhost:5173'
 
 CSRF_TRUSTED_ORIGINS = [
     'https://pokebin.onrender.com',
@@ -210,26 +216,71 @@ SERVER_EMAIL = 'Pokebin <no-reply@pokebin.app>'
 SECURE_CROSS_ORIGIN_OPENER_POLICY='same-origin-allow-popups'
 
 
-# Amazon S3 integration (optional for local development)
+# Object storage configuration
+# - USE_R2=True enables Cloudflare R2 for media uploads.
+# - If USE_R2 is False and AWS_STORAGE_BUCKET_NAME is provided, AWS S3 is used.
+# - Otherwise, local filesystem storage is used.
 
-AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME', default=None)
+try:
+    USE_R2 = env.bool('USE_R2')
+except Exception:
+    USE_R2 = False
 
-# Django 4.2 storage configuration for s3
-# Use S3 if AWS_STORAGE_BUCKET_NAME is set, otherwise use local file storage
+try:
+    AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME')
+except Exception:
+    AWS_STORAGE_BUCKET_NAME = None
 
-if AWS_STORAGE_BUCKET_NAME:
+if USE_R2:
+    R2_ACCOUNT_ID = env('R2_ACCOUNT_ID')
+    R2_BUCKET_NAME = env('R2_BUCKET_NAME')
+    R2_ACCESS_KEY_ID = env('R2_ACCESS_KEY_ID')
+    R2_SECRET_ACCESS_KEY = env('R2_SECRET_ACCESS_KEY')
+    try:
+        R2_CUSTOM_DOMAIN = env('R2_CUSTOM_DOMAIN')
+    except Exception:
+        R2_CUSTOM_DOMAIN = ''
+
+    # django-storages uses AWS_* names for any S3-compatible provider.
+    AWS_ACCESS_KEY_ID = R2_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY = R2_SECRET_ACCESS_KEY
+    AWS_STORAGE_BUCKET_NAME = R2_BUCKET_NAME
+    AWS_S3_REGION_NAME = 'auto'
+    AWS_S3_ENDPOINT_URL = f'https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com'
+    AWS_S3_SIGNATURE_VERSION = 's3v4'
+    AWS_DEFAULT_ACL = None
+    AWS_QUERYSTRING_AUTH = False
+    AWS_S3_FILE_OVERWRITE = False
+
     STORAGES = {
-        # Media file (image) management
         "default": {
-            "BACKEND": "storages.backends.s3boto3.S3StaticStorage",
+            "BACKEND": "storages.backends.s3.S3Storage",
         },
-        # CSS and JS file management
         "staticfiles": {
-            "BACKEND": "storages.backends.s3boto3.S3StaticStorage",
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
     }
-    AWS_S3_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
+
+    if R2_CUSTOM_DOMAIN:
+        MEDIA_URL = f'https://{R2_CUSTOM_DOMAIN}/'
+    else:
+        MEDIA_URL = f'https://{R2_BUCKET_NAME}.{R2_ACCOUNT_ID}.r2.cloudflarestorage.com/'
+
+elif AWS_STORAGE_BUCKET_NAME:
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
     AWS_S3_FILE_OVERWRITE = False
+    AWS_QUERYSTRING_AUTH = False
+
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
+
 else:
     # Local file storage (default Django behavior)
     STORAGES = {
@@ -239,17 +290,22 @@ else:
         "staticfiles": {
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
-    } 
+    }
 
 # Database configuration
 # Use SQLite for local development if DB_NAME is not set, otherwise use PostgreSQL
 
-if env('DB_NAME', default=None):
+try:
+    DB_NAME = env('DB_NAME')
+except Exception:
+    DB_NAME = None
+
+if DB_NAME:
     # Production: Use PostgreSQL
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': env('DB_NAME'),
+            'NAME': DB_NAME,
             'USER': env('DB_USER'),
             'PASSWORD': env('DB_PASSWORD'),
             'HOST': env('DB_HOST'),
