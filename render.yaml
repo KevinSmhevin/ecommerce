@@ -26,14 +26,18 @@ services:
         sync: false  # Set this manually
       - key: DB_HOST
         sync: false  # Set this manually (RDS endpoint)
-      - key: AWS_STORAGE_BUCKET_NAME
+      - key: USE_R2
+        value: "True"
+      - key: R2_ACCOUNT_ID
+        sync: false  # Set this manually from Cloudflare R2
+      - key: R2_BUCKET_NAME
         sync: false  # Set this manually
-      - key: AWS_ACCESS_KEY_ID
+      - key: R2_ACCESS_KEY_ID
         sync: false  # Set this manually
-      - key: AWS_SECRET_ACCESS_KEY
+      - key: R2_SECRET_ACCESS_KEY
         sync: false  # Set this manually
-      - key: AWS_S3_REGION_NAME
-        value: us-east-1  # Update to your region
+      - key: R2_CUSTOM_DOMAIN
+        sync: false  # Optional (e.g., media.pokebin.app). Falls back to <bucket>.r2.dev
       - key: SENDGRID_API_KEY
         sync: false  # Set this manually
       - key: DEFAULT_FROM_EMAIL
