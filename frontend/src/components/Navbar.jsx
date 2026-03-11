@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import Logo from './Logo'
+import InstagramLink from './InstagramLink'
 
 const Navbar = () => {
   const { getCartItemCount } = useCart()
@@ -35,14 +36,23 @@ const Navbar = () => {
   return (
     <nav className="bg-white border-b-2 border-black shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center hover:opacity-80 transition-opacity" onClick={closeMobileMenu}>
+        <div className="relative flex justify-between items-center h-16">
+          {/* Left: Instagram */}
+          <div className="flex items-center z-10">
+            <InstagramLink />
+          </div>
+
+          {/* Center: Logo */}
+          <Link
+            to="/"
+            className="absolute left-1/2 -translate-x-1/2 flex items-center hover:opacity-80 transition-opacity"
+            onClick={closeMobileMenu}
+          >
             <Logo size="small" />
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-6">
+          <div className="hidden lg:flex items-center space-x-6 z-10">
             <Link
               to="/cart"
               className="relative text-black font-medium hover:text-primary-red transition-colors"
@@ -147,7 +157,7 @@ const Navbar = () => {
           </div>
 
           {/* Mobile: Cart and Menu Button */}
-          <div className="flex lg:hidden items-center space-x-4">
+          <div className="flex lg:hidden items-center space-x-4 z-10">
             <Link
               to="/cart"
               className="relative text-black font-medium hover:text-primary-red transition-colors"

@@ -1,4 +1,4 @@
-const Logo = ({ className = "", size = "default" }) => {
+const Logo = ({ className = "", size = "default", showText = true }) => {
   const iconSize = size === "large" ? 56 : size === "small" ? 32 : 40
   const textSize = size === "large" ? "text-3xl" : size === "small" ? "text-xl" : "text-2xl"
   
@@ -37,10 +37,11 @@ const Logo = ({ className = "", size = "default" }) => {
         </svg>
       </div>
       
-      {/* Text Logo with retro game styling */}
-      <span className={`${textSize} font-black text-primary-red leading-tight tracking-tight drop-shadow-sm`}>
-        POKEBIN
-      </span>
+      {showText && (
+        <span className={`${textSize} font-black text-primary-red leading-tight tracking-tight drop-shadow-sm`}>
+          POKEBIN
+        </span>
+      )}
     </div>
   )
 }
