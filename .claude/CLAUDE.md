@@ -106,6 +106,8 @@ npm install
 npm run dev        # http://localhost:5173 (proxies /api, /account, /payment to :8000)
 npm run build      # outputs to dist/
 npm run preview
+npm test           # run tests in watch mode (Vitest)
+npm run test:run   # run tests once (CI / one-shot)
 ```
 
 ## Environment Variables
@@ -143,6 +145,38 @@ Static files are always served by WhiteNoise's `CompressedManifestStaticFilesSto
 - DRF default permission is `AllowAny`; sensitive endpoints opt in via `@permission_classes([IsAuthenticated])`. Keep that pattern when adding endpoints.
 - `CSRF_TRUSTED_ORIGINS` and `CORS_ALLOWED_ORIGINS` are explicit allow-lists. New frontend hosts must be added to both.
 - `db.sqlite3` is committed in the working tree historically but is gitignored going forward — don't rely on it for prod data.
+
+## Frontend Testing
+
+### Stack
+- **Runner**: Vitest 1.x (configured in `vite.config.js` under the `test` key)
+- **Environment**: jsdom
+- **Libraries**: `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom`
+- **Setup file**: `frontend/src/test/setup.js` (imports jest-dom matchers)
+
+### Test file locations
+Tests live alongside source files or in the same directory, named `*.test.jsx` / `*.test.js`:
+
+| File | What is covered |
+|---|---|
+| `src/lib/utils.test.js` | `cn()` class merging utility |
+| `src/config/axios.test.js` | CSRF interceptor — X-CSRFToken on POST/PUT/PATCH/DELETE, not GET |
+| `src/context/CartContext.test.jsx` | init, add/remove/update, stock caps, localStorage, totals |
+| `src/context/AuthContext.test.jsx` | checkAuth, login/logout, register, error handling |
+| `src/context/AppContext.test.jsx` | fetchProducts, fetchCategories, slug lookups, error states |
+| `src/components/Alert.test.jsx` | variants, children rendering |
+| `src/components/Pagination.test.jsx` | boundaries, ellipsis, aria-current, click handlers |
+| `src/components/ProductCard.test.jsx` | rendering, image fallback, slug link |
+| `src/components/NavbarStadium.test.jsx` | auth/unauth states, cart badge, logout |
+| `src/pages/Login.test.jsx` | form, validation, API call, loading, error display |
+| `src/pages/Register.test.jsx` | form, field errors, success screen, 3s redirect |
+
+### Conventions
+- Mock axios with `vi.mock('../config/axios')` — the mock must stub `defaults` and `interceptors.request.use` since `axios.js` runs interceptor registration at module load time.
+- Wrap components in their required context providers inside tests; don't import context internals directly.
+- Use `fireEvent.change` over `userEvent.type` for multi-field forms to avoid per-character async overhead hitting the 5s timeout.
+- For fake-timer + async tests (e.g. the Register 3s redirect): flush microtasks with `await act(async () => { await Promise.resolve() })` before advancing timers — `waitFor` breaks under `vi.useFakeTimers`.
+- Page tests mock `useAuth` as `vi.fn()` so each `beforeEach` can set the return value without module re-imports.
 
 ## Deployment
 
