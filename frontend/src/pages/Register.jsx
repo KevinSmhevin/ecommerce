@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import FormField from '../components/FormField'
+import Alert from '../components/Alert'
 
 const Register = () => {
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password1: '',
-    password2: '',
-  })
+  const [formData, setFormData] = useState({ username: '', email: '', password1: '', password2: '' })
   const [error, setError] = useState('')
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
@@ -16,24 +13,11 @@ const Register = () => {
   const { register, user } = useAuth()
   const navigate = useNavigate()
 
-  useEffect(() => {
-    if (user) {
-      navigate('/')
-    }
-  }, [user, navigate])
+  useEffect(() => { if (user) navigate('/') }, [user, navigate])
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    })
-    // Clear error for this field
-    if (errors[e.target.name]) {
-      setErrors({
-        ...errors,
-        [e.target.name]: null,
-      })
-    }
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+    if (errors[e.target.name]) setErrors({ ...errors, [e.target.name]: null })
   }
 
   const handleSubmit = async (e) => {
@@ -41,39 +25,32 @@ const Register = () => {
     setError('')
     setErrors({})
     setLoading(true)
-
     const result = await register(formData)
-    
     if (result.success) {
       setSuccess(true)
-      setTimeout(() => {
-        navigate('/')
-      }, 3000)
+      setTimeout(() => navigate('/'), 3000)
     } else {
       setError(result.message)
-      if (result.errors) {
-        setErrors(result.errors)
-      }
+      if (result.errors) setErrors(result.errors)
     }
-    
     setLoading(false)
   }
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg border-2 border-gray-200 shadow-lg text-center">
-          <div className="text-green-600 text-5xl mb-4">✓</div>
-          <h2 className="text-2xl font-bold text-black mb-4">
-            Registration Successful!
-          </h2>
-          <p className="text-gray-600 mb-4">
-            Please check your email to verify your account before logging in.
+      <div className="min-h-screen flex items-center justify-center py-12 px-4">
+        <div
+          className="w-full max-w-md bg-white border-2 border-black rounded-2xl p-8 text-center"
+          style={{ boxShadow: '6px 6px 0 #000' }}
+        >
+          <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-white font-black text-lg">✓</span>
+          </div>
+          <h2 className="text-xl font-black text-black uppercase tracking-widest mb-3">Account Created</h2>
+          <p className="text-gray-500 text-sm font-bold mb-6">
+            Check your email to verify your account before logging in.
           </p>
-          <Link
-            to="/login"
-            className="inline-block text-primary-red hover:text-red-700 font-medium"
-          >
+          <Link to="/login" className="text-red-600 text-sm font-black uppercase tracking-widest hover:text-red-700 transition-colors">
             Go to Login →
           </Link>
         </div>
@@ -82,120 +59,44 @@ const Register = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg border-2 border-gray-200 shadow-lg">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-bold text-black">
-            Create your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Already have an account?{' '}
-            <Link
-              to="/login"
-              className="font-medium text-primary-red hover:text-red-700"
-            >
-              Sign in
-            </Link>
-          </p>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 border-2 border-red-200 text-red-700 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                Username
-              </label>
-              <input
-                id="username"
-                name="username"
-                type="text"
-                required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border-2 border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red focus:z-10 sm:text-sm"
-                placeholder="Username"
-                value={formData.username}
-                onChange={handleChange}
-              />
-              {errors.username && (
-                <p className="mt-1 text-sm text-red-600">{errors.username[0]}</p>
-              )}
-            </div>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border-2 border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red focus:z-10 sm:text-sm"
-                placeholder="Email"
-                value={formData.email}
-                onChange={handleChange}
-              />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email[0]}</p>
-              )}
-            </div>
-            <div>
-              <label htmlFor="password1" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <input
-                id="password1"
-                name="password1"
-                type="password"
-                required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border-2 border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={formData.password1}
-                onChange={handleChange}
-              />
-              {errors.password1 && (
-                <p className="mt-1 text-sm text-red-600">{errors.password1[0]}</p>
-              )}
-            </div>
-            <div>
-              <label htmlFor="password2" className="block text-sm font-medium text-gray-700">
-                Confirm Password
-              </label>
-              <input
-                id="password2"
-                name="password2"
-                type="password"
-                required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border-2 border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red focus:z-10 sm:text-sm"
-                placeholder="Confirm Password"
-                value={formData.password2}
-                onChange={handleChange}
-              />
-              {errors.password2 && (
-                <p className="mt-1 text-sm text-red-600">{errors.password2[0]}</p>
-              )}
-            </div>
+    <div className="min-h-screen flex items-center justify-center py-12 px-4">
+      <div className="w-full max-w-md">
+        <div
+          className="bg-white border-2 border-black rounded-2xl p-8"
+          style={{ boxShadow: '6px 6px 0 #000' }}
+        >
+          <div className="mb-8">
+            <h1 className="text-2xl font-black text-black uppercase tracking-widest">Create Account</h1>
+            <p className="text-gray-500 text-sm font-bold uppercase tracking-wider mt-1">
+              Already have one?{' '}
+              <Link to="/login" className="text-red-600 hover:text-red-700 transition-colors">Sign in</Link>
+            </p>
           </div>
 
-          <div>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {error && <Alert type="error">{error}</Alert>}
+
+            <FormField id="username" label="Username" type="text" required placeholder="Username"
+              value={formData.username} onChange={handleChange} error={errors.username} />
+            <FormField id="email" label="Email" type="email" required placeholder="Email"
+              value={formData.email} onChange={handleChange} error={errors.email} />
+            <FormField id="password1" label="Password" type="password" required placeholder="Password"
+              value={formData.password1} onChange={handleChange} error={errors.password1} />
+            <FormField id="password2" label="Confirm Password" type="password" required placeholder="Confirm Password"
+              value={formData.password2} onChange={handleChange} error={errors.password2} />
+
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border-2 border-transparent text-sm font-medium rounded-md text-white bg-primary-red hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-red disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full py-3 bg-red-600 text-white font-black uppercase tracking-widest text-sm rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Creating account...' : 'Create account'}
+              {loading ? 'Creating account...' : 'Create Account'}
             </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   )
 }
 
 export default Register
-
-
-
-

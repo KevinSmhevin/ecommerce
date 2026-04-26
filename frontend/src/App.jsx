@@ -3,7 +3,7 @@ import { AppProvider } from './context/AppContext'
 import { CartProvider } from './context/CartContext'
 import { AuthProvider } from './context/AuthContext'
 import NavbarStadium from './components/NavbarStadium'
-import HomeStadium from './pages/HomeStadium'
+import Home from './pages/Home'
 import ProductDetail from './pages/ProductDetail'
 import CategoryPage from './pages/CategoryPage'
 import CartPage from './pages/CartPage'
@@ -24,11 +24,11 @@ function App() {
       <AuthProvider>
         <CartProvider>
           <Router>
-            <div className="min-h-screen bg-white">
+            <div className="min-h-screen">
               <NavbarStadium />
               <main>
                 <Routes>
-                  <Route path="/"                    element={<HomeStadium />} />
+                  <Route path="/"                    element={<Home />} />
                   <Route path="/product/:slug"        element={<ProductDetail />} />
                   <Route path="/category/:slug"       element={<CategoryPage />} />
                   <Route path="/cart"                 element={<CartPage />} />
