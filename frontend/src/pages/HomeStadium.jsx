@@ -9,13 +9,9 @@ import { ChevronRight } from 'lucide-react'
 export const StadiumProductCard = ({ product }) => (
   <Link
     to={`/product/${product.slug}`}
-    className="group flex flex-col bg-white border-2 border-black rounded-xl overflow-hidden transition-all duration-200 hover:border-red-600"
-    style={{ boxShadow: '0 2px 0 #000' }}
-    onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '5px 5px 0 #DC2626' }}
-    onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 2px 0 #000' }}
+    className="group flex flex-col bg-white border border-black/20 rounded-2xl overflow-hidden transition-all duration-200 hover:border-black hover:shadow-lg"
   >
-    {/* Image */}
-    <div className="aspect-square bg-gray-50 overflow-hidden flex items-center justify-center p-4">
+    <div className="aspect-square bg-gray-50 overflow-hidden flex items-center justify-center p-4 rounded-xl m-2 mb-0">
       {product.image_url ? (
         <img
           src={product.image_url}
@@ -26,17 +22,13 @@ export const StadiumProductCard = ({ product }) => (
         <span className="text-gray-300 text-xs uppercase tracking-widest font-bold">No Image</span>
       )}
     </div>
-
-    {/* Info */}
-    <div className="flex flex-col flex-1 p-4 border-t-2 border-black gap-3">
-      <h3 className="text-black font-black text-sm uppercase tracking-wide leading-snug line-clamp-2 flex-1">
+    <div className="flex flex-col flex-1 p-4 gap-2">
+      <h3 className="text-black font-bold text-sm leading-snug line-clamp-2 flex-1">
         {product.title}
       </h3>
-      <div className="flex items-center justify-between">
-        <span className="bg-red-600 text-white font-black text-sm px-3 py-1 rounded-md">
-          ${product.price}
-        </span>
-        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-red-600 group-hover:translate-x-0.5 transition-all" />
+      <div className="flex items-center gap-2">
+        <div className="w-2 h-2 bg-red-600 rounded-full shrink-0" />
+        <span className="text-black font-black text-sm">${product.price}</span>
       </div>
     </div>
   </Link>
