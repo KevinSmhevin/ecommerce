@@ -244,17 +244,34 @@ def api_manage_shipping(request):
 def api_check_order(request):
     """API endpoint to check order by order number"""
     order_number = request.data.get('order_number')
-    
+    email = request.data.get('email', '').strip().lower()
+
     if not order_number:
         return Response(
             {'error': 'Order number is required'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
+    if not request.user.is_authenticated and not email:
+        return Response(
+            {'error': 'Email is required to look up your order'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
     try:
         order = Order.objects.get(id=order_number)
+
+        # Verify the requester owns this order before returning any data
+        if request.user.is_authenticated:
+            if order.user_id and order.user_id != request.user.id:
+                return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            # Guest lookup: require the order's email as a second factor
+            if order.email.lower() != email:
+                return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
+
         order_items = OrderItem.objects.filter(order=order)
-        
+
         items_data = []
         for item in order_items:
             items_data.append({
@@ -263,7 +280,7 @@ def api_check_order(request):
                 'price': str(item.price),
                 'total': str(item.quantity * item.price),
             })
-        
+
         return Response({
             'success': True,
             'order': {
@@ -285,7 +302,7 @@ def api_check_order(request):
             {'error': 'Order not found'},
             status=status.HTTP_404_NOT_FOUND
         )
-    except Exception as e:
+    except Exception:
         return Response(
             {'error': 'Unable to find order number'},
             status=status.HTTP_400_BAD_REQUEST

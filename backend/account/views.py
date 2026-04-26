@@ -25,20 +25,20 @@ from django.contrib.auth.decorators import login_required
 from django.core.mail import EmailMessage
 from django.conf import settings
 
-def check_order(request):    
+@login_required(login_url='my-login')
+def check_order(request):
     if request.method == "POST":
-        order_number = request.POST['order-number']
+        order_number = request.POST.get('order-number')
         try:
-            order = Order.objects.get(id=order_number)
-            
+            order = Order.objects.get(id=order_number, user=request.user)
             return render(request, 'account/check-order.html', {'order': order})
-        
-        except:
-            messages.error(request, "unable to find order number")
+        except Order.DoesNotExist:
+            messages.error(request, "Order not found.")
             return render(request, 'account/check-order.html', {})
-
+        except Exception:
+            messages.error(request, "Unable to find order number")
+            return render(request, 'account/check-order.html', {})
     else:
-        
         return render(request, 'account/check-order.html', {})
            
 

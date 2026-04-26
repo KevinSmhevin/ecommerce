@@ -3,6 +3,7 @@ import axios from '../config/axios'
 
 const CheckOrder = () => {
   const [orderNumber, setOrderNumber] = useState('')
+  const [email, setEmail] = useState('')
   const [order, setOrder] = useState(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -16,9 +17,9 @@ const CheckOrder = () => {
     try {
       const response = await axios.post(
         '/account/api/check-order',
-        { order_number: orderNumber }
+        { order_number: orderNumber, email }
       )
-      
+
       if (response.data.success) {
         setOrder(response.data.order)
       }
@@ -48,19 +49,29 @@ const CheckOrder = () => {
           <h2 className="text-3xl font-bold text-black mb-6">Check Your Order</h2>
           
           <form onSubmit={handleSubmit} className="mb-8">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <input
-                type="text"
-                value={orderNumber}
-                onChange={(e) => setOrderNumber(e.target.value)}
-                placeholder="Enter order number"
-                required
-                className="flex-1 appearance-none relative block w-full px-3 py-2 border-2 border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red sm:text-sm"
-              />
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <input
+                  type="text"
+                  value={orderNumber}
+                  onChange={(e) => setOrderNumber(e.target.value)}
+                  placeholder="Enter order number"
+                  required
+                  className="flex-1 appearance-none relative block w-full px-3 py-2 border-2 border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red sm:text-sm"
+                />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter order email"
+                  required
+                  className="flex-1 appearance-none relative block w-full px-3 py-2 border-2 border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red sm:text-sm"
+                />
+              </div>
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full sm:w-auto px-6 py-2 border-2 border-transparent text-sm font-medium rounded-md text-white bg-primary-red hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-red disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                className="w-full sm:w-auto px-6 py-2 border-2 border-transparent text-sm font-medium rounded-md text-white bg-primary-red hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-red disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? 'Searching...' : 'Search'}
               </button>

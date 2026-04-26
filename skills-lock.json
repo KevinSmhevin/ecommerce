@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "skills": {
+    "django-patterns": {
+      "source": "affaan-m/everything-claude-code",
+      "sourceType": "github",
+      "computedHash": "b1477691a59a4ed4cc4fa2180cec057537857455c537ad6d87f6c68340ab07f3"
+    },
+    "django-verification": {
+      "source": "affaan-m/everything-claude-code",
+      "sourceType": "github",
+      "computedHash": "f890c0a4ca713dd8876d328677cc6078be9c0b6b745b5fc67eb5444fdae3ff90"
+    }
+  }
+}
