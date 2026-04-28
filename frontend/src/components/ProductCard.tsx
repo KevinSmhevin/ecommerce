@@ -1,6 +1,11 @@
 import { Link } from 'react-router-dom'
+import type { Product } from '@/types/api'
 
-const ProductCard = ({ product }) => (
+interface ProductCardProps {
+  product: Pick<Product, 'slug' | 'title' | 'price' | 'image_url'>
+}
+
+const ProductCard = ({ product }: ProductCardProps) => (
   <Link
     to={`/product/${product.slug}`}
     className="group flex flex-col bg-white border border-black/20 rounded-2xl overflow-hidden transition-all duration-200 hover:border-black hover:shadow-lg"

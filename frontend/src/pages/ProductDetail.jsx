@@ -1,26 +1,17 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import axios from '../config/axios'
+import { useProductBySlugQuery } from '@/hooks/useProductBySlugQuery'
 import { useCart } from '../context/CartContext'
 import PageSpinner from '../components/PageSpinner'
 
 const ProductDetail = () => {
   const { slug } = useParams()
   const { addToCart, cartItems } = useCart()
-  const [product, setProduct] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const { data: product, isPending } = useProductBySlugQuery(slug)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [addedToCart, setAddedToCart] = useState(false)
   const [cartMessage, setCartMessage] = useState('')
-
-  useEffect(() => {
-    setLoading(true)
-    axios.get(`/api/products/${slug}/`)
-      .then(r => setProduct(r.data))
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [slug])
 
   const images = product
     ? [product.image_url, product.image2_url, product.image3_url, product.image4_url].filter(Boolean)
@@ -50,7 +41,7 @@ const ProductDetail = () => {
     setTimeout(() => setAddedToCart(false), 2000)
   }
 
-  if (loading) return <PageSpinner />
+  if (isPending) return <PageSpinner />
 
   if (!product) {
     return (

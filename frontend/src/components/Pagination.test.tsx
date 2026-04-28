@@ -4,15 +4,12 @@ import userEvent from '@testing-library/user-event'
 import Pagination from './Pagination'
 
 describe('Pagination component', () => {
-  let onPageChange
+  let onPageChange: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
     onPageChange = vi.fn()
   })
 
-  // -------------------------
-  // Rendering
-  // -------------------------
   describe('rendering', () => {
     it('renders nothing when totalPages is 1', () => {
       const { container } = render(
@@ -53,9 +50,6 @@ describe('Pagination component', () => {
     })
   })
 
-  // -------------------------
-  // Disabled states
-  // -------------------------
   describe('disabled states', () => {
     it('disables the Previous button on page 1', () => {
       render(<Pagination currentPage={1} totalPages={5} onPageChange={onPageChange} />)
@@ -78,9 +72,6 @@ describe('Pagination component', () => {
     })
   })
 
-  // -------------------------
-  // Click handlers
-  // -------------------------
   describe('click handlers', () => {
     it('calls onPageChange with currentPage-1 when Previous is clicked', async () => {
       const user = userEvent.setup()
@@ -118,9 +109,6 @@ describe('Pagination component', () => {
     })
   })
 
-  // -------------------------
-  // Ellipsis / windowing
-  // -------------------------
   describe('page windowing with ellipsis', () => {
     it('shows all pages without ellipsis when totalPages <= 5', () => {
       render(<Pagination currentPage={1} totalPages={5} onPageChange={onPageChange} />)
@@ -133,7 +121,6 @@ describe('Pagination component', () => {
     it('shows ellipsis when totalPages > 5 and currentPage is near the start', () => {
       render(<Pagination currentPage={2} totalPages={10} onPageChange={onPageChange} />)
       expect(screen.getByText('...')).toBeInTheDocument()
-      // First page + last page should be visible
       expect(screen.getByRole('button', { name: 'Page 1' })).toBeInTheDocument()
       expect(screen.getByRole('button', { name: 'Page 10' })).toBeInTheDocument()
     })

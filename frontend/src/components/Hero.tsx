@@ -1,4 +1,10 @@
+import type { MouseEvent } from 'react'
 import { ChevronRight } from 'lucide-react'
+
+const handleShopNowClick = (e: MouseEvent<HTMLAnchorElement>) => {
+  e.preventDefault()
+  document.querySelector('#products')?.scrollIntoView({ behavior: 'smooth' })
+}
 
 const Hero = () => (
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-10">
@@ -6,7 +12,6 @@ const Hero = () => (
       className="relative h-[380px] md:h-[480px] bg-black overflow-hidden rounded-2xl"
       style={{ border: '4px solid #000', boxShadow: '8px 8px 0 #DC2626' }}
     >
-      {/* Red diagonal — narrower on mobile so text area stays black */}
       <div
         className="absolute inset-0 bg-red-600 hidden md:block"
         style={{ clipPath: 'polygon(48% 0, 100% 0, 100% 100%, 28% 100%)' }}
@@ -44,10 +49,7 @@ const Hero = () => (
         </h1>
         <a
           href="#products"
-          onClick={(e) => {
-            e.preventDefault()
-            document.querySelector('#products')?.scrollIntoView({ behavior: 'smooth' })
-          }}
+          onClick={handleShopNowClick}
           className="inline-flex items-center gap-2 px-5 py-3 md:px-8 md:py-4 bg-white text-black font-black uppercase tracking-widest text-xs md:text-sm hover:bg-red-600 hover:text-white transition-colors self-start rounded-xl"
           style={{ border: '3px solid #fff', boxShadow: '4px 4px 0 #DC2626' }}
         >

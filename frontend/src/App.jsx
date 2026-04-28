@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { AppProvider } from './context/AppContext'
 import { CartProvider } from './context/CartContext'
 import { AuthProvider } from './context/AuthContext'
 import NavbarStadium from './components/NavbarStadium'
@@ -20,35 +19,33 @@ import PaymentFailed from './pages/PaymentFailed'
 
 function App() {
   return (
-    <AppProvider>
-      <AuthProvider>
-        <CartProvider>
-          <Router>
-            <div className="min-h-screen">
-              <NavbarStadium />
-              <main>
-                <Routes>
-                  <Route path="/"                    element={<Home />} />
-                  <Route path="/product/:slug"        element={<ProductDetail />} />
-                  <Route path="/category/:slug"       element={<CategoryPage />} />
-                  <Route path="/cart"                 element={<CartPage />} />
-                  <Route path="/login"                element={<Login />} />
-                  <Route path="/register"             element={<Register />} />
-                  <Route path="/check-order"          element={<CheckOrder />} />
-                  <Route path="/dashboard"            element={<Dashboard />} />
-                  <Route path="/track-orders"         element={<TrackOrders />} />
-                  <Route path="/profile-management"   element={<ProfileManagement />} />
-                  <Route path="/manage-shipping"      element={<ManageShipping />} />
-                  <Route path="/checkout"             element={<Checkout />} />
-                  <Route path="/payment-success"      element={<PaymentSuccess />} />
-                  <Route path="/payment-failed"       element={<PaymentFailed />} />
-                </Routes>
-              </main>
-            </div>
-          </Router>
-        </CartProvider>
-      </AuthProvider>
-    </AppProvider>
+    <AuthProvider>
+      <CartProvider>
+        <Router>
+          <div className="min-h-screen">
+            <NavbarStadium />
+            <main>
+              <Routes>
+                <Route path="/"                    element={<Home />} />
+                <Route path="/product/:slug"        element={<ProductDetail />} />
+                <Route path="/category/:slug"       element={<CategoryPage />} />
+                <Route path="/cart"                 element={<CartPage />} />
+                <Route path="/login"                element={<Login />} />
+                <Route path="/register"             element={<Register />} />
+                <Route path="/check-order"          element={<CheckOrder />} />
+                <Route path="/dashboard"            element={<Dashboard />} />
+                <Route path="/track-orders"         element={<TrackOrders />} />
+                <Route path="/profile-management"   element={<ProfileManagement />} />
+                <Route path="/manage-shipping"      element={<ManageShipping />} />
+                <Route path="/checkout"             element={<Checkout />} />
+                <Route path="/payment-success"      element={<PaymentSuccess />} />
+                <Route path="/payment-failed"       element={<PaymentFailed />} />
+              </Routes>
+            </main>
+          </div>
+        </Router>
+      </CartProvider>
+    </AuthProvider>
   )
 }
 

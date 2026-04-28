@@ -163,20 +163,56 @@ Tests live alongside source files or in the same directory, named `*.test.jsx` /
 | `src/config/axios.test.js` | CSRF interceptor — X-CSRFToken on POST/PUT/PATCH/DELETE, not GET |
 | `src/context/CartContext.test.jsx` | init, add/remove/update, stock caps, localStorage, totals |
 | `src/context/AuthContext.test.jsx` | checkAuth, login/logout, register, error handling |
-| `src/context/AppContext.test.jsx` | fetchProducts, fetchCategories, slug lookups, error states |
 | `src/components/Alert.test.jsx` | variants, children rendering |
-| `src/components/Pagination.test.jsx` | boundaries, ellipsis, aria-current, click handlers |
-| `src/components/ProductCard.test.jsx` | rendering, image fallback, slug link |
+| `src/components/Pagination.test.tsx` | boundaries, ellipsis, aria-current, click handlers |
+| `src/components/ProductCard.test.tsx` | rendering, image fallback, slug link |
+| `src/components/ProductGrid.test.tsx` | products + categories queries, sort/category params, empty state |
 | `src/components/NavbarStadium.test.jsx` | auth/unauth states, cart badge, logout |
 | `src/pages/Login.test.jsx` | form, validation, API call, loading, error display |
 | `src/pages/Register.test.jsx` | form, field errors, success screen, 3s redirect |
 
 ### Conventions
-- Mock axios with `vi.mock('../config/axios')` — the mock must stub `defaults` and `interceptors.request.use` since `axios.js` runs interceptor registration at module load time.
+- Mock axios with `vi.mock('@/config/axios')` (or `'../config/axios'`) — the mock must stub `defaults` and `interceptors.request.use` since `axios.js` runs interceptor registration at module load time.
 - Wrap components in their required context providers inside tests; don't import context internals directly.
+- For components that use TanStack Query hooks, wrap renders in a fresh `<QueryClientProvider client={new QueryClient(...)}>` per test with `retry: false` and `gcTime: Infinity` so queries don't retry or leak across tests.
 - Use `fireEvent.change` over `userEvent.type` for multi-field forms to avoid per-character async overhead hitting the 5s timeout.
 - For fake-timer + async tests (e.g. the Register 3s redirect): flush microtasks with `await act(async () => { await Promise.resolve() })` before advancing timers — `waitFor` breaks under `vi.useFakeTimers`.
 - Page tests mock `useAuth` as `vi.fn()` so each `beforeEach` can set the return value without module re-imports.
+
+## Frontend Architecture Preferences
+
+### TypeScript-first
+New components and modules are written in TypeScript (`.tsx` for components, `.ts` for plain modules). The repo is mid-migration from `.jsx` to `.tsx`:
+- TS today: the Home subtree (`pages/Home.tsx`, `components/Hero.tsx`, `MiniBanners.tsx`, `ProductGrid.tsx`, `ProductCard.tsx`, `Pagination.tsx`), plus `src/api/`, `src/hooks/use*Query.ts`, `src/lib/queryClient.ts`, `src/types/api.ts`, and `src/components/ui/skeleton.tsx`.
+- Still `.jsx`/`.js`: contexts (`AuthContext`, `CartContext`), the rest of the pages, `App.jsx`, `main.jsx`, `config/axios.js`, `lib/utils.js`, the older `components/ui/*` primitives. These migrate incrementally.
+- Strict mode is on (`strict`, `noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch`); `allowJs: true` for interop. Run `npm run typecheck` to verify.
+- TS configs are split: `tsconfig.json` (root, references), `tsconfig.app.json` (app code), `tsconfig.node.json` (Vite config). Path alias `@/*` → `src/*` is set in both `tsconfig.app.json` and `vite.config.js`.
+
+### Server state lives in TanStack Query
+- React Context is for **client state only** (auth session, cart). Server data goes through TanStack Query.
+- Add a typed wrapper in `src/api/<resource>.ts`, then a hook in `src/hooks/use<Resource>Query.ts`. Components consume the hook — they should not call `axios.get` directly.
+- Query keys are colocated with the hook as a typed object (e.g. `productsKeys.list(params)`), so invalidations stay consistent.
+- `QueryClientProvider` is mounted in `main.jsx` with the client from `@/lib/queryClient`. `ReactQueryDevtools` is mounted in dev.
+- Default `QueryClient` config: `staleTime: 60s`, `gcTime: 5m`, `refetchOnWindowFocus: false`, `retry: 1`. Override per-query when needed.
+- For paginated lists, pass `placeholderData: keepPreviousData` so the UI doesn't flash empty between pages.
+- `AppContext` has been removed. Don't reintroduce a server-state context.
+
+### HTTP client
+- Still axios. Import from `@/config/axios` so the CSRF interceptor and `withCredentials: true` apply. TanStack Query wraps axios in the `src/api/*` helpers.
+
+### UI primitives
+- Use the shadcn-style components in `src/components/ui/` (`button`, `card`, `input`, `label`, `badge`, `skeleton`) and the `cn()` helper from `@/lib/utils`. Compose these instead of re-implementing variants.
+- Tailwind 3 with shadcn HSL CSS variables (`--primary`, `--muted`, etc.) plus arcade-theme overrides in `src/index.css`.
+
+### Routing
+- `react-router-dom` v6, configured in `App.jsx`. TanStack Router is **not** in use; introducing it is a whole-app concern and out of scope unless explicitly requested.
+
+### Not in use (don't introduce speculatively)
+- **TanStack Form** — no current form has the validation/composition complexity to justify it. Plain controlled inputs are fine for `Login`, `Register`, `Checkout`.
+- **TanStack Table** — no tabular admin/dashboard view yet. Reach for it when the right use case appears (e.g. an admin order list with sorting/filtering).
+
+### Path imports
+- Prefer `@/...` over deep relative paths (`../../../...`) in new code. Both Vite and TS resolve `@` to `src`.
 
 ## Deployment
 

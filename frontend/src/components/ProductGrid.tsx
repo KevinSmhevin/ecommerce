@@ -1,72 +1,75 @@
 import { useEffect, useState } from 'react'
+import type { ChangeEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useApp } from '../context/AppContext'
-import axios from '../config/axios'
+import { useProductsQuery } from '@/hooks/useProductsQuery'
+import { useCategoriesQuery } from '@/hooks/useCategoriesQuery'
+import type { ProductOrdering } from '@/types/api'
 import Pagination from './Pagination'
 import ProductCard from './ProductCard'
 
-const ProductGrid = ({ categorySlug, title = 'All Products' }) => {
-  const { loading: appLoading, categories } = useApp()
-  const navigate = useNavigate()
-  const [products, setProducts] = useState([])
-  const [sortBy, setSortBy] = useState('default')
-  const [selectedCategory, setSelectedCategory] = useState(categorySlug || 'all')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [totalCount, setTotalCount] = useState(0)
-  const [pageLoading, setPageLoading] = useState(false)
+interface ProductGridProps {
+  categorySlug?: string
+  title?: string
+}
 
-  const categoriesList = Array.isArray(categories) ? categories : []
+type SortOption = 'default' | 'price_asc' | 'price_desc'
+
+const PAGE_SIZE = 15
+
+const orderingFor = (sort: SortOption): ProductOrdering | undefined => {
+  if (sort === 'price_asc') return 'price'
+  if (sort === 'price_desc') return '-price'
+  return undefined
+}
+
+const ProductGrid = ({ categorySlug, title = 'All Products' }: ProductGridProps) => {
+  const navigate = useNavigate()
+  const [sortBy, setSortBy] = useState<SortOption>('default')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [selectedCategory, setSelectedCategory] = useState<string>(categorySlug ?? 'all')
 
   useEffect(() => {
     setCurrentPage(1)
     setSortBy('default')
-    setSelectedCategory(categorySlug || 'all')
+    setSelectedCategory(categorySlug ?? 'all')
   }, [categorySlug])
 
-  useEffect(() => { setCurrentPage(1) }, [sortBy])
-  useEffect(() => { loadProducts() }, [categorySlug, sortBy, currentPage])
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [sortBy])
 
-  const loadProducts = async () => {
-    try {
-      setPageLoading(true)
-      const params = { page: currentPage }
-      if (categorySlug) params.category = categorySlug
-      if (sortBy === 'price_asc') params.ordering = 'price'
-      else if (sortBy === 'price_desc') params.ordering = '-price'
-      const response = await axios.get('/api/products/', { params })
-      if (response.data.results) {
-        setProducts(response.data.results)
-        setTotalPages(Math.ceil(response.data.count / 15))
-        setTotalCount(response.data.count)
-      } else {
-        setProducts(Array.isArray(response.data) ? response.data : [])
-        setTotalPages(1)
-        setTotalCount(response.data.length || 0)
-      }
-    } catch {
-      setProducts([])
-    } finally {
-      setPageLoading(false)
-    }
-  }
+  const productsQuery = useProductsQuery({
+    page: currentPage,
+    category: categorySlug,
+    ordering: orderingFor(sortBy),
+  })
+  const categoriesQuery = useCategoriesQuery()
 
-  const handleCategoryChange = (e) => {
+  const totalCount = productsQuery.data?.count ?? 0
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+  const products = productsQuery.data?.results ?? []
+  const categoriesList = categoriesQuery.data ?? []
+  const isInitialLoading = productsQuery.isPending
+  const isFetchingPage = productsQuery.isFetching && productsQuery.isPlaceholderData
+
+  const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const slug = e.target.value
     setSelectedCategory(slug)
     if (slug === 'all') navigate('/')
     else navigate(`/category/${slug}`)
   }
 
-  const handlePageChange = (page) => {
+  const handleSortChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    setSortBy(e.target.value as SortOption)
+  }
+
+  const handlePageChange = (page: number) => {
     setCurrentPage(page)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   return (
     <div id="products" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 scroll-mt-8">
-
-      {/* Filter bar */}
       <div
         className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 px-6 py-4 bg-white border-2 border-black rounded-xl"
         style={{ boxShadow: '4px 4px 0 #000' }}
@@ -93,7 +96,7 @@ const ProductGrid = ({ categorySlug, title = 'All Products' }) => {
           </select>
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
+            onChange={handleSortChange}
             className="bg-white border-2 border-black rounded-lg text-black text-sm font-bold uppercase tracking-wider px-4 py-2 focus:outline-none focus:border-red-600 transition-colors w-full sm:w-auto"
           >
             <option value="default">Default</option>
@@ -103,8 +106,7 @@ const ProductGrid = ({ categorySlug, title = 'All Products' }) => {
         </div>
       </div>
 
-      {/* Grid */}
-      {appLoading || pageLoading ? (
+      {isInitialLoading ? (
         <div className="flex items-center justify-center h-64">
           <div className="w-10 h-10 border-4 border-black border-t-red-600 rounded-full animate-spin" />
         </div>
@@ -114,7 +116,11 @@ const ProductGrid = ({ categorySlug, title = 'All Products' }) => {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div
+            className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 transition-opacity ${
+              isFetchingPage ? 'opacity-60' : 'opacity-100'
+            }`}
+          >
             {products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

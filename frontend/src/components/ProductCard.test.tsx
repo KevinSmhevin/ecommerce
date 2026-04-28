@@ -2,17 +2,16 @@ import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import ProductCard from './ProductCard'
+import type { Product } from '@/types/api'
 
-const baseProduct = {
-  id: 1,
+const baseProduct: Pick<Product, 'slug' | 'title' | 'price' | 'image_url'> = {
   title: 'Charizard Holo',
   slug: 'charizard-holo',
   price: '49.99',
-  stock: 5,
   image_url: 'https://example.com/charizard.jpg',
 }
 
-const renderCard = (product = baseProduct) =>
+const renderCard = (product: Pick<Product, 'slug' | 'title' | 'price' | 'image_url'> = baseProduct) =>
   render(
     <MemoryRouter>
       <ProductCard product={product} />
@@ -66,7 +65,6 @@ describe('ProductCard component', () => {
   describe('visual indicator', () => {
     it('renders the red dot price indicator', () => {
       const { container } = renderCard()
-      // The red dot is a div with bg-red-600 and rounded-full
       const dot = container.querySelector('.bg-red-600.rounded-full')
       expect(dot).toBeInTheDocument()
     })
