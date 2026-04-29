@@ -1,11 +1,11 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { useCategoryBySlugQuery } from '@/hooks/useCategoryBySlugQuery'
-import PageSpinner from '../components/PageSpinner'
-import ProductGrid from '../components/ProductGrid'
+import PageSpinner from '@/components/PageSpinner'
+import ProductGrid from '@/components/ProductGrid'
 
 const CategoryPage = () => {
-  const { slug } = useParams()
+  const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const { data: category, isPending } = useCategoryBySlugQuery(slug)
 

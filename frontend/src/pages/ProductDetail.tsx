@@ -2,40 +2,51 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useProductBySlugQuery } from '@/hooks/useProductBySlugQuery'
-import { useCart } from '../context/CartContext'
-import PageSpinner from '../components/PageSpinner'
+import { useCart } from '@/context/CartContext'
+import PageSpinner from '@/components/PageSpinner'
+import type { Product } from '@/types/api'
+
+interface CartItem extends Product {
+  quantity: number
+}
+
+const collectImages = (product: Product): string[] =>
+  [product.image_url, product.image2_url, product.image3_url, product.image4_url]
+    .filter((url): url is string => typeof url === 'string' && url.length > 0)
 
 const ProductDetail = () => {
-  const { slug } = useParams()
-  const { addToCart, cartItems } = useCart()
+  const { slug } = useParams<{ slug: string }>()
+  const cart = useCart() as {
+    addToCart: (product: Product, quantity?: number) => void
+    cartItems: CartItem[]
+  }
   const { data: product, isPending } = useProductBySlugQuery(slug)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [addedToCart, setAddedToCart] = useState(false)
   const [cartMessage, setCartMessage] = useState('')
 
-  const images = product
-    ? [product.image_url, product.image2_url, product.image3_url, product.image4_url].filter(Boolean)
-    : []
+  const images = product ? collectImages(product) : []
 
   useEffect(() => {
     if (images.length <= 1) return
-    const handler = (e) => {
-      if (e.key === 'ArrowLeft') setSelectedIndex(i => (i > 0 ? i - 1 : images.length - 1))
-      if (e.key === 'ArrowRight') setSelectedIndex(i => (i < images.length - 1 ? i + 1 : 0))
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') setSelectedIndex((i) => (i > 0 ? i - 1 : images.length - 1))
+      if (e.key === 'ArrowRight') setSelectedIndex((i) => (i < images.length - 1 ? i + 1 : 0))
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [images.length])
 
   const handleAddToCart = () => {
-    const existing = cartItems.find(i => i.id === product.id)
+    if (!product) return
+    const existing = cart.cartItems.find((i) => i.id === product.id)
     const currentQty = existing ? existing.quantity : 0
     if (currentQty >= product.stock) {
       setCartMessage(`Maximum quantity (${product.stock}) already in cart`)
       setTimeout(() => setCartMessage(''), 3000)
       return
     }
-    addToCart(product, 1)
+    cart.addToCart(product, 1)
     setAddedToCart(true)
     setCartMessage('')
     setTimeout(() => setAddedToCart(false), 2000)
@@ -53,7 +64,7 @@ const ProductDetail = () => {
     )
   }
 
-  const mainImage = images[selectedIndex] || images[0]
+  const mainImage = images[selectedIndex] ?? images[0]
 
   return (
     <div className="min-h-screen">
@@ -75,13 +86,13 @@ const ProductDetail = () => {
                     {images.length > 1 && (
                       <div className="absolute inset-0 flex items-center justify-between px-3 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
-                          onClick={() => setSelectedIndex(i => (i > 0 ? i - 1 : images.length - 1))}
+                          onClick={() => setSelectedIndex((i) => (i > 0 ? i - 1 : images.length - 1))}
                           className="bg-white border-2 border-black rounded-full p-1.5 hover:bg-black hover:text-white transition-colors"
                         >
                           <ChevronLeft className="w-5 h-5" />
                         </button>
                         <button
-                          onClick={() => setSelectedIndex(i => (i < images.length - 1 ? i + 1 : 0))}
+                          onClick={() => setSelectedIndex((i) => (i < images.length - 1 ? i + 1 : 0))}
                           className="bg-white border-2 border-black rounded-full p-1.5 hover:bg-black hover:text-white transition-colors"
                         >
                           <ChevronRight className="w-5 h-5" />
