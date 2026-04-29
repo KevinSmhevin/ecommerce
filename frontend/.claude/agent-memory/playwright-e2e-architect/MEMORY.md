@@ -1,0 +1,5 @@
+- [Pokebin e2e — port collisions](feedback_pokebin_port.md) — port 5173 is regularly held by another dev server on this machine; e2e suite uses 5273
+- [Pokebin axios CSRF cache bug](project_pokebin_csrf_cache.md) — module-scoped CSRF cache in axios.ts makes UI logout 403; one e2e test is fixme'd until fixed
+- [Pokebin CartContext localStorage race](project_pokebin_cart_localstorage.md) — pre-seeding 'cart' in localStorage is overwritten by CartProvider's mount-effect; use UI add-to-cart in tests
+- [Pokebin DRF CSRF on anonymous](feedback_drf_anonymous_csrf.md) — DRF SessionAuthentication only enforces CSRF on requests carrying a session
+- [Pokebin Django runserver expectation](project_pokebin_django_prerequisite.md) — Playwright config does not boot Django; expect manual `python manage.py runserver`

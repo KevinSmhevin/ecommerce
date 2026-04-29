@@ -30,5 +30,10 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     globals: true,
+    // Vitest only owns *.test.{ts,tsx} files under src/. Playwright owns
+    // everything under e2e/ — without this exclude vitest would try to run
+    // *.spec.ts files as if they were unit tests.
+    include: ['src/**/*.test.{ts,tsx}'],
+    exclude: ['node_modules', 'dist', 'e2e/**', 'playwright-report/**', 'test-results/**'],
   },
 })
