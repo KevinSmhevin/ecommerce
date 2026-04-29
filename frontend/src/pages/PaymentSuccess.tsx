@@ -1,7 +1,13 @@
 import { Link, useLocation } from 'react-router-dom'
 
+interface PaymentSuccessLocationState {
+  orderId?: string | number
+}
+
 const PaymentSuccess = () => {
-  const orderId = useLocation().state?.orderId
+  const location = useLocation()
+  const state = location.state as PaymentSuccessLocationState | null
+  const orderId = state?.orderId
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4">

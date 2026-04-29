@@ -1,31 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthQuery } from '@/hooks/useAuthQuery'
-import axios from '../config/axios'
-import PageSpinner from '../components/PageSpinner'
-import OrderCard from '../components/OrderCard'
+import { useOrdersQuery } from '@/hooks/useOrdersQuery'
+import PageSpinner from '@/components/PageSpinner'
+import OrderCard from '@/components/OrderCard'
 
 const TrackOrders = () => {
   const { data: user, isPending: authLoading } = useAuthQuery()
+  const ordersQuery = useOrdersQuery(Boolean(user))
   const navigate = useNavigate()
-  const [orders, setOrders] = useState([])
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!authLoading && !user) navigate('/login')
   }, [user, authLoading, navigate])
 
-  useEffect(() => {
-    if (user) {
-      axios.get('/account/api/track-orders')
-        .then(r => setOrders(r.data.orders || []))
-        .catch(() => {})
-        .finally(() => setLoading(false))
-    }
-  }, [user])
-
-  if (authLoading || loading) return <PageSpinner />
+  if (authLoading || (user && ordersQuery.isPending)) return <PageSpinner />
   if (!user) return null
+
+  const orders = ordersQuery.data ?? []
 
   return (
     <div className="min-h-screen">

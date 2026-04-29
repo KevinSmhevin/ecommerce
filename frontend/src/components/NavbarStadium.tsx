@@ -1,7 +1,8 @@
-import { Link } from 'react-router-dom'
 import { useState } from 'react'
+import type { MouseEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { ShoppingCart, Menu, X, ChevronDown } from 'lucide-react'
-import { useCart } from '../context/CartContext'
+import { useCart } from '@/hooks/useCart'
 import { useAuthQuery } from '@/hooks/useAuthQuery'
 import { useLogoutMutation } from '@/hooks/useLogoutMutation'
 import InstagramLink from './InstagramLink'
@@ -14,15 +15,22 @@ const NavbarStadium = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const cartCount = getCartItemCount()
 
-  const handleLogout = async (e) => {
+  const handleLogout = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
     e.stopPropagation()
-    try { await logoutMutation.mutateAsync() } catch (_) {}
+    try {
+      await logoutMutation.mutateAsync()
+    } catch {
+      // ignore logout errors — we still close menus and trust onSettled to clear cache
+    }
     setUserMenuOpen(false)
     setMobileMenuOpen(false)
   }
 
-  const close = () => { setMobileMenuOpen(false); setUserMenuOpen(false) }
+  const close = () => {
+    setMobileMenuOpen(false)
+    setUserMenuOpen(false)
+  }
 
   return (
     <>
@@ -41,7 +49,6 @@ const NavbarStadium = () => {
               className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2.5"
               onClick={close}
             >
-              {/* Bold geometric pokeball */}
               <div className="w-9 h-9 rounded-full border-4 border-black overflow-hidden relative bg-red-600 flex-shrink-0">
                 <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-white" />
                 <div className="absolute inset-0 flex items-center">

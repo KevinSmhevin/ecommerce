@@ -1,11 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+import type { ComponentType, SVGProps } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuthQuery } from '@/hooks/useAuthQuery'
 import { Package, User, MapPin, Info } from 'lucide-react'
-import axios from '../config/axios'
-import PageSpinner from '../components/PageSpinner'
+import { useAuthQuery } from '@/hooks/useAuthQuery'
+import { useDashboardQuery } from '@/hooks/useDashboardQuery'
+import PageSpinner from '@/components/PageSpinner'
 
-const DashboardCard = ({ to, icon: Icon, title, subtitle, meta }) => (
+interface DashboardCardProps {
+  to: string
+  icon: ComponentType<SVGProps<SVGSVGElement>>
+  title: string
+  subtitle: string
+  meta?: string | null
+}
+
+const DashboardCard = ({ to, icon: Icon, title, subtitle, meta }: DashboardCardProps) => (
   <Link
     to={to}
     className="group bg-white border border-black/20 rounded-2xl p-6 hover:border-black hover:shadow-lg transition-all duration-200 flex flex-col"
@@ -26,25 +35,21 @@ const DashboardCard = ({ to, icon: Icon, title, subtitle, meta }) => (
 
 const Dashboard = () => {
   const { data: user, isPending: authLoading } = useAuthQuery()
+  const dashboardQuery = useDashboardQuery(Boolean(user))
   const navigate = useNavigate()
-  const [dashboardData, setDashboardData] = useState(null)
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!authLoading && !user) navigate('/login')
   }, [user, authLoading, navigate])
 
-  useEffect(() => {
-    if (user) {
-      axios.get('/account/api/dashboard')
-        .then(r => setDashboardData(r.data))
-        .catch(() => {})
-        .finally(() => setLoading(false))
-    }
-  }, [user])
-
-  if (authLoading || loading) return <PageSpinner />
+  if (authLoading || (user && dashboardQuery.isPending)) return <PageSpinner />
   if (!user) return null
+
+  const ordersCount = dashboardQuery.data?.orders_count
+  const ordersMeta =
+    typeof ordersCount === 'number'
+      ? `${ordersCount} ${ordersCount === 1 ? 'order' : 'orders'}`
+      : null
 
   return (
     <div className="min-h-screen">
@@ -62,7 +67,7 @@ const Dashboard = () => {
             icon={Package}
             title="Track Orders"
             subtitle="View and track your order history"
-            meta={dashboardData ? `${dashboardData.orders_count} ${dashboardData.orders_count === 1 ? 'order' : 'orders'}` : null}
+            meta={ordersMeta}
           />
           <DashboardCard
             to="/profile-management"

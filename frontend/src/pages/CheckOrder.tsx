@@ -1,30 +1,44 @@
 import { useState } from 'react'
-import axios from '../config/axios'
-import FormField from '../components/FormField'
-import Alert from '../components/Alert'
-import OrderCard from '../components/OrderCard'
+import type { FormEvent } from 'react'
+import { useCheckOrderMutation } from '@/hooks/useCheckOrderMutation'
+import type { Order } from '@/types/api'
+import FormField from '@/components/FormField'
+import Alert from '@/components/Alert'
+import OrderCard from '@/components/OrderCard'
+
+const isAxiosErrorShape = (
+  err: unknown,
+): err is { response?: { data?: { error?: string } } } =>
+  err !== null && typeof err === 'object' && 'response' in (err as Record<string, unknown>)
 
 const CheckOrder = () => {
   const [orderNumber, setOrderNumber] = useState('')
   const [email, setEmail] = useState('')
-  const [order, setOrder] = useState(null)
+  const [order, setOrder] = useState<Order | null>(null)
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const checkOrderMutation = useCheckOrderMutation()
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
     setOrder(null)
-    setLoading(true)
     try {
-      const response = await axios.post('/account/api/check-order', { order_number: orderNumber, email })
-      if (response.data.success) setOrder(response.data.order)
+      const result = await checkOrderMutation.mutateAsync({ order_number: orderNumber, email })
+      if (result.success && result.order) {
+        setOrder(result.order)
+      } else {
+        setError(result.error ?? 'Unable to find order number')
+      }
     } catch (err) {
-      setError(err.response?.data?.error || 'Unable to find order number')
-    } finally {
-      setLoading(false)
+      if (isAxiosErrorShape(err)) {
+        setError(err.response?.data?.error ?? 'Unable to find order number')
+      } else {
+        setError('Unable to find order number')
+      }
     }
   }
+
+  const loading = checkOrderMutation.isPending
 
   return (
     <div className="min-h-screen">

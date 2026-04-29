@@ -19,7 +19,6 @@ describe('cn (className merge utility)', () => {
   })
 
   it('deduplicates conflicting Tailwind classes — last one wins', () => {
-    // tailwind-merge resolves conflicts: px-4 then px-6 → px-6
     expect(cn('px-4', 'px-6')).toBe('px-6')
   })
 

@@ -152,21 +152,21 @@ Static files are always served by WhiteNoise's `CompressedManifestStaticFilesSto
 - **Runner**: Vitest 1.x (configured in `vite.config.js` under the `test` key)
 - **Environment**: jsdom
 - **Libraries**: `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom`
-- **Setup file**: `frontend/src/test/setup.js` (imports jest-dom matchers)
+- **Setup file**: `frontend/src/test/setup.ts` (imports jest-dom matchers)
 
 ### Test file locations
-Tests live alongside source files or in the same directory, named `*.test.jsx` / `*.test.js`:
+Tests live alongside source files or in the same directory, named `*.test.tsx` / `*.test.ts`:
 
 | File | What is covered |
 |---|---|
-| `src/lib/utils.test.js` | `cn()` class merging utility |
-| `src/config/axios.test.js` | CSRF interceptor — X-CSRFToken on POST/PUT/PATCH/DELETE, not GET |
-| `src/context/CartContext.test.jsx` | init, add/remove/update, stock caps, localStorage, totals |
+| `src/lib/utils.test.ts` | `cn()` class merging utility |
+| `src/config/axios.test.ts` | CSRF interceptor — X-CSRFToken on POST/PUT/PATCH/DELETE, not GET |
+| `src/context/CartContext.test.tsx` | init, add/remove/update, stock caps, localStorage, totals |
 | `src/components/Alert.test.tsx` | variants, children rendering |
 | `src/components/Pagination.test.tsx` | boundaries, ellipsis, aria-current, click handlers |
 | `src/components/ProductCard.test.tsx` | rendering, image fallback, slug link |
 | `src/components/ProductGrid.test.tsx` | products + categories queries, sort/category params, empty state |
-| `src/components/NavbarStadium.test.jsx` | auth/unauth states (via real `useAuthQuery` + axios mock), cart badge, logout mutation |
+| `src/components/NavbarStadium.test.tsx` | auth/unauth states (via real `useAuthQuery` + axios mock), cart badge, logout mutation |
 | `src/pages/Login.test.tsx` | form, login mutation, loading, error display, redirect when authenticated |
 | `src/pages/Register.test.tsx` | form, register mutation, field errors, success screen, 3s redirect |
 
@@ -181,20 +181,20 @@ Tests live alongside source files or in the same directory, named `*.test.jsx` /
 ## Frontend Architecture Preferences
 
 ### TypeScript-first
-New components and modules are written in TypeScript (`.tsx` for components, `.ts` for plain modules). The repo is mid-migration from `.jsx` to `.tsx`:
-- TS today: the Home subtree (`pages/Home.tsx`, `components/Hero.tsx`, `MiniBanners.tsx`, `ProductGrid.tsx`, `ProductCard.tsx`, `Pagination.tsx`), the auth surface (`pages/Login.tsx`, `pages/Register.tsx`, `components/Alert.tsx`, `components/FormField.tsx`), the catalog detail pages (`pages/ProductDetail.tsx`, `pages/CategoryPage.tsx`, `components/PageSpinner.tsx`), the cart + checkout flow (`pages/CartPage.tsx`, `pages/Checkout.tsx`), plus `src/api/`, `src/hooks/use*Query.ts` / `use*Mutation.ts` / `useCart.ts`, `src/lib/queryClient.ts`, `src/types/{api,cart}.ts`, `src/types/paypal.d.ts`, `src/vite-env.d.ts`, `src/components/ui/skeleton.tsx`.
-- Still `.jsx`/`.js`: `CartContext` itself (typed via `src/hooks/useCart.ts` wrapper), the account/order pages (`Dashboard`, `TrackOrders`, `ProfileManagement`, `ManageShipping`, `CheckOrder`, `PaymentSuccess`, `PaymentFailed`), `App.jsx`, `main.jsx`, `config/axios.js`, `lib/utils.js`, the older `components/ui/*` primitives, `NavbarStadium.jsx`, `OrderCard.jsx`, `InstagramLink.jsx`. These migrate incrementally.
-- Strict mode is on (`strict`, `noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch`); `allowJs: true` for interop. Run `npm run typecheck` to verify.
+The frontend is fully TypeScript — every file under `frontend/src/` is `.ts` / `.tsx` (or `.d.ts` for ambient types). New code goes the same way; do not introduce `.js` / `.jsx` files.
+- App code: pages under `src/pages/`, components under `src/components/` (including `src/components/ui/`), the cart context at `src/context/CartContext.tsx`, the API layer under `src/api/`, the query/mutation hooks under `src/hooks/`, the typed axios client at `src/config/axios.ts`, `src/lib/{utils,queryClient}.ts`, `src/types/{api,cart}.ts`, the `App.tsx` / `main.tsx` shell.
+- Ambient types: `src/types/paypal.d.ts` (declares `Window.paypal`), `src/vite-env.d.ts` (declares `ImportMetaEnv` for `VITE_API_URL` / `VITE_PAYPAL_CLIENT_ID`).
+- Strict mode is on (`strict`, `noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch`). `allowJs: true` is left enabled in `tsconfig.app.json` for interop with future contributions, but the codebase has no `.js` files of its own. Run `npm run typecheck` to verify.
 - TS configs are split: `tsconfig.json` (root, references), `tsconfig.app.json` (app code), `tsconfig.node.json` (Vite config). Path alias `@/*` → `src/*` is set in both `tsconfig.app.json` and `vite.config.js`.
 
 ### Server state lives in TanStack Query
-- React Context is for **client state only** (currently just `CartContext`, which is a localStorage-backed shopping cart). Server data goes through TanStack Query — including auth.
+- React Context is for **client state only** (currently just `CartContext`, which is a localStorage-backed shopping cart). All server data — auth, products, categories, dashboard, profile, orders, shipping — goes through TanStack Query.
 - Add a typed wrapper in `src/api/<resource>.ts`, then a query/mutation hook in `src/hooks/use<Resource>Query.ts` / `use<Action>Mutation.ts`. Components consume the hook — they should not call `axios.get`/`axios.post` directly.
-- Query keys are colocated with the hook as a typed object (e.g. `productsKeys.list(params)`, `authKeys.session()`), so invalidations stay consistent.
-- `QueryClientProvider` is mounted in `main.jsx` with the client from `@/lib/queryClient`. `ReactQueryDevtools` is mounted in dev.
+- Query keys are colocated with the hook as a typed object (e.g. `productsKeys.list(params)`, `authKeys.session()`, `ordersKeys.list()`, `profileKeys.detail()`, `shippingKeys.saved()`), so invalidations stay consistent.
+- `QueryClientProvider` is mounted in `src/main.tsx` with the client from `@/lib/queryClient`. `ReactQueryDevtools` is mounted in dev.
 - Default `QueryClient` config: `staleTime: 60s`, `gcTime: 5m`, `refetchOnWindowFocus: false`, `retry: 1`. Override per-query when needed.
 - For paginated lists, pass `placeholderData: keepPreviousData` so the UI doesn't flash empty between pages.
-- Mutations that change the user (login/register/logout) update the auth cache: login calls `queryClient.setQueryData(authKeys.session(), user)`; logout invalidates and clears it. Don't write a parallel `useState` for `user` — read it from `useAuthQuery()` everywhere.
+- Mutations that change the user (login/register/logout) update the auth cache: login calls `queryClient.setQueryData(authKeys.session(), user)`; logout invalidates and clears it. Profile updates invalidate `profileKeys.detail()` and `authKeys.session()`. Shipping saves invalidate `shippingKeys.saved()`. Don't write a parallel `useState` for `user` — read it from `useAuthQuery()` everywhere.
 - `AppContext` and `AuthContext` have both been removed. Don't reintroduce server-state contexts.
 
 ### Auth surface
@@ -211,7 +211,7 @@ New components and modules are written in TypeScript (`.tsx` for components, `.t
 - Tailwind 3 with shadcn HSL CSS variables (`--primary`, `--muted`, etc.) plus arcade-theme overrides in `src/index.css`.
 
 ### Routing
-- `react-router-dom` v6, configured in `App.jsx`. TanStack Router is **not** in use; introducing it is a whole-app concern and out of scope unless explicitly requested.
+- `react-router-dom` v6, configured in `src/App.tsx`. TanStack Router is **not** in use; introducing it is a whole-app concern and out of scope unless explicitly requested.
 
 ### Not in use (don't introduce speculatively)
 - **TanStack Form** — `Login` and `Register` use plain controlled inputs + `FormField`. The forms are short enough that TanStack Form's machinery doesn't pay for itself. Reach for it if a future form picks up async cross-field validation, dependent fields, or wizard-style multi-step flows.

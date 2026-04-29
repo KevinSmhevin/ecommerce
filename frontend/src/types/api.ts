@@ -35,3 +35,24 @@ export interface ProductsQueryParams {
   category?: string
   search?: string
 }
+
+export interface OrderItem {
+  product_name: string
+  quantity: number
+  price: string
+  total: string
+}
+
+export interface Order {
+  id: number | string
+  date_ordered: string
+  shipped: boolean
+  full_name: string
+  email: string
+  shipping_address: string
+  amount_paid: string
+  items: OrderItem[]
+  date_shipped?: string | null
+  tracking_number?: string | null
+  courier?: string | null
+}

@@ -1,12 +1,21 @@
-const formatDate = (dateString) => {
+import type { Order } from '@/types/api'
+
+interface OrderCardProps {
+  order: Order
+}
+
+const formatDate = (dateString: string | null | undefined): string => {
   if (!dateString) return 'N/A'
   return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric', month: 'long', day: 'numeric',
-    hour: '2-digit', minute: '2-digit',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   })
 }
 
-const OrderCard = ({ order }) => (
+const OrderCard = ({ order }: OrderCardProps) => (
   <div className="bg-white border border-black/20 rounded-2xl overflow-hidden">
 
     {/* Header */}

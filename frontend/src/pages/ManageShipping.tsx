@@ -1,21 +1,39 @@
 import { useEffect, useState } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthQuery } from '@/hooks/useAuthQuery'
-import axios from '../config/axios'
-import PageSpinner from '../components/PageSpinner'
-import FormField from '../components/FormField'
-import Alert from '../components/Alert'
+import { useShippingQuery } from '@/hooks/useShippingQuery'
+import { useSaveShippingMutation } from '@/hooks/useSaveShippingMutation'
+import type { ShippingAddress } from '@/api/shipping'
+import type { FieldErrors } from '@/api/auth'
+import PageSpinner from '@/components/PageSpinner'
+import FormField from '@/components/FormField'
+import Alert from '@/components/Alert'
 
-const EMPTY = { full_name: '', email: '', address1: '', address2: '', city: '', state: '', zipcode: '' }
+const EMPTY_ADDRESS: ShippingAddress = {
+  full_name: '',
+  email: '',
+  address1: '',
+  address2: '',
+  city: '',
+  state: '',
+  zipcode: '',
+}
+
+const isAxiosErrorShape = (
+  err: unknown,
+): err is { response?: { data?: { error?: string; errors?: FieldErrors } } } =>
+  err !== null && typeof err === 'object' && 'response' in (err as Record<string, unknown>)
 
 const ManageShipping = () => {
   const { data: user, isPending: authLoading } = useAuthQuery()
+  const shippingQuery = useShippingQuery(Boolean(user))
+  const saveShipping = useSaveShippingMutation()
   const navigate = useNavigate()
-  const [formData, setFormData] = useState(EMPTY)
+
+  const [formData, setFormData] = useState<ShippingAddress>(EMPTY_ADDRESS)
   const [error, setError] = useState('')
-  const [errors, setErrors] = useState({})
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const [errors, setErrors] = useState<FieldErrors>({})
   const [success, setSuccess] = useState(false)
 
   useEffect(() => {
@@ -23,43 +41,59 @@ const ManageShipping = () => {
   }, [user, authLoading, navigate])
 
   useEffect(() => {
-    if (user) {
-      axios.get('/account/api/manage-shipping')
-        .then(r => { if (r.data && Object.keys(r.data).length > 0) setFormData(r.data) })
-        .catch(() => {})
-        .finally(() => setLoading(false))
+    const saved = shippingQuery.data
+    if (saved && Object.keys(saved).length > 0) {
+      setFormData((prev) => ({ ...prev, ...saved }) as ShippingAddress)
     }
-  }, [user])
+  }, [shippingQuery.data])
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
-    if (errors[e.target.name]) setErrors({ ...errors, [e.target.name]: null })
+  useEffect(() => {
+    if (!success) return
+    const timer = setTimeout(() => setSuccess(false), 3000)
+    return () => clearTimeout(timer)
+  }, [success])
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+    if (errors[name]) {
+      setErrors((prev) => {
+        const next = { ...prev }
+        delete next[name]
+        return next
+      })
+    }
     setError('')
     setSuccess(false)
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
     setErrors({})
     setSuccess(false)
-    setSaving(true)
     try {
-      const r = await axios.post('/account/api/manage-shipping', formData)
-      if (r.data.success) {
+      const result = await saveShipping.mutateAsync(formData)
+      if (result.success) {
         setSuccess(true)
-        setTimeout(() => setSuccess(false), 3000)
+      } else {
+        setError(result.error ?? 'Failed to save shipping address')
+        if (result.errors) setErrors(result.errors)
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to save shipping address')
-      if (err.response?.data?.errors) setErrors(err.response.data.errors)
-    } finally {
-      setSaving(false)
+      if (isAxiosErrorShape(err)) {
+        setError(err.response?.data?.error ?? 'Failed to save shipping address')
+        if (err.response?.data?.errors) setErrors(err.response.data.errors)
+      } else {
+        setError('Failed to save shipping address')
+      }
     }
   }
 
-  if (authLoading || loading) return <PageSpinner />
+  if (authLoading || (user && shippingQuery.isPending)) return <PageSpinner />
   if (!user) return null
+
+  const saving = saveShipping.isPending
 
   return (
     <div className="min-h-screen">

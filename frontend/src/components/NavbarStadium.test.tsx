@@ -4,9 +4,8 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import NavbarStadium from './NavbarStadium'
-import { CartProvider } from '../context/CartContext'
+import { CartProvider } from '@/context/CartContext'
 
-// Prevent real HTTP calls from useAuthQuery and the axios config module.
 vi.mock('@/config/axios', () => ({
   default: {
     get: vi.fn(),
@@ -17,6 +16,9 @@ vi.mock('@/config/axios', () => ({
 }))
 
 import axios from '@/config/axios'
+
+const mockedGet = axios.get as ReturnType<typeof vi.fn>
+const mockedPost = axios.post as ReturnType<typeof vi.fn>
 
 const renderNavbar = () => {
   const queryClient = new QueryClient({
@@ -40,8 +42,7 @@ describe('NavbarStadium component', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     localStorage.clear()
-    // Default: unauthenticated
-    axios.get.mockResolvedValue({ data: { authenticated: false } })
+    mockedGet.mockResolvedValue({ data: { authenticated: false } })
   })
 
   describe('brand logo', () => {
@@ -95,14 +96,14 @@ describe('NavbarStadium component', () => {
     it('does not render a username when unauthenticated', async () => {
       renderNavbar()
       await waitFor(() => expect(screen.getByText('POKEBIN')).toBeInTheDocument())
-      await waitFor(() => expect(axios.get).toHaveBeenCalled())
+      await waitFor(() => expect(mockedGet).toHaveBeenCalled())
       expect(screen.queryByText('ashketchum')).not.toBeInTheDocument()
     })
   })
 
   describe('navigation links (authenticated)', () => {
     it('renders the username in the navbar when authenticated', async () => {
-      axios.get.mockResolvedValue({
+      mockedGet.mockResolvedValue({
         data: { authenticated: true, user: { username: 'ashketchum', email: 'ash@pallet.com' } },
       })
       renderNavbar()
@@ -110,7 +111,7 @@ describe('NavbarStadium component', () => {
     })
 
     it('does not render the Login link when authenticated', async () => {
-      axios.get.mockResolvedValue({
+      mockedGet.mockResolvedValue({
         data: { authenticated: true, user: { username: 'ashketchum', email: 'ash@pallet.com' } },
       })
       renderNavbar()
@@ -119,7 +120,7 @@ describe('NavbarStadium component', () => {
     })
 
     it('does not render the Sign Up link when authenticated', async () => {
-      axios.get.mockResolvedValue({
+      mockedGet.mockResolvedValue({
         data: { authenticated: true, user: { username: 'ashketchum', email: 'ash@pallet.com' } },
       })
       renderNavbar()
@@ -170,10 +171,10 @@ describe('NavbarStadium component', () => {
     it('calls the logout API when logout button is clicked', async () => {
       const user = userEvent.setup()
 
-      axios.get.mockResolvedValue({
+      mockedGet.mockResolvedValue({
         data: { authenticated: true, user: { username: 'ashketchum', email: 'ash@pallet.com' } },
       })
-      axios.post.mockResolvedValueOnce({ data: { success: true } })
+      mockedPost.mockResolvedValueOnce({ data: { success: true } })
 
       renderNavbar()
       await waitFor(() => expect(screen.getAllByText('ashketchum').length).toBeGreaterThan(0))
@@ -184,7 +185,7 @@ describe('NavbarStadium component', () => {
       const logoutBtn = screen.getByRole('button', { name: /logout/i })
       await act(async () => user.click(logoutBtn))
 
-      await waitFor(() => expect(axios.post).toHaveBeenCalledWith('/account/api/logout', {}))
+      await waitFor(() => expect(mockedPost).toHaveBeenCalledWith('/account/api/logout', {}))
     })
   })
 })
