@@ -2,13 +2,9 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useProductBySlugQuery } from '@/hooks/useProductBySlugQuery'
-import { useCart } from '@/context/CartContext'
+import { useCart } from '@/hooks/useCart'
 import PageSpinner from '@/components/PageSpinner'
 import type { Product } from '@/types/api'
-
-interface CartItem extends Product {
-  quantity: number
-}
 
 const collectImages = (product: Product): string[] =>
   [product.image_url, product.image2_url, product.image3_url, product.image4_url]
@@ -16,10 +12,7 @@ const collectImages = (product: Product): string[] =>
 
 const ProductDetail = () => {
   const { slug } = useParams<{ slug: string }>()
-  const cart = useCart() as {
-    addToCart: (product: Product, quantity?: number) => void
-    cartItems: CartItem[]
-  }
+  const { addToCart, cartItems } = useCart()
   const { data: product, isPending } = useProductBySlugQuery(slug)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [addedToCart, setAddedToCart] = useState(false)
@@ -39,14 +32,14 @@ const ProductDetail = () => {
 
   const handleAddToCart = () => {
     if (!product) return
-    const existing = cart.cartItems.find((i) => i.id === product.id)
+    const existing = cartItems.find((i) => i.id === product.id)
     const currentQty = existing ? existing.quantity : 0
     if (currentQty >= product.stock) {
       setCartMessage(`Maximum quantity (${product.stock}) already in cart`)
       setTimeout(() => setCartMessage(''), 3000)
       return
     }
-    cart.addToCart(product, 1)
+    addToCart(product, 1)
     setAddedToCart(true)
     setCartMessage('')
     setTimeout(() => setAddedToCart(false), 2000)

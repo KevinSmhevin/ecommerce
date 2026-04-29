@@ -1,7 +1,14 @@
 import { Link } from 'react-router-dom'
-import { useCart } from '../context/CartContext'
+import { useCart } from '@/hooks/useCart'
+import type { CartItem as CartItemType } from '@/types/cart'
 
-const CartItem = ({ item, onUpdate, onRemove }) => (
+interface CartItemProps {
+  item: CartItemType
+  onUpdate: (productId: number, quantity: number) => void
+  onRemove: (productId: number) => void
+}
+
+const CartItem = ({ item, onUpdate, onRemove }: CartItemProps) => (
   <div className="bg-white border border-black/20 rounded-2xl p-5 flex flex-col sm:flex-row gap-4">
     <div className="w-full sm:w-28 h-28 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center p-2">
       {item.image_url ? (
@@ -37,7 +44,7 @@ const CartItem = ({ item, onUpdate, onRemove }) => (
           </span>
           <button
             onClick={() => onUpdate(item.id, item.quantity + 1)}
-            disabled={item.stock && item.quantity >= item.stock}
+            disabled={Boolean(item.stock) && item.quantity >= item.stock}
             className="px-3 py-1.5 text-black font-black hover:bg-black hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           >
             +

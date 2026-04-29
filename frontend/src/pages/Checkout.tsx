@@ -1,94 +1,162 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { ChangeEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useCart } from '../context/CartContext'
+import { useCart } from '@/hooks/useCart'
 import { useAuthQuery } from '@/hooks/useAuthQuery'
-import axios from '../config/axios'
-import PageSpinner from '../components/PageSpinner'
-import FormField from '../components/FormField'
-import Alert from '../components/Alert'
+import { useShippingQuery } from '@/hooks/useShippingQuery'
+import { useCompleteOrderMutation } from '@/hooks/useCompleteOrderMutation'
+import type { ShippingAddress } from '@/api/shipping'
+import type { FieldErrors } from '@/api/auth'
+import PageSpinner from '@/components/PageSpinner'
+import FormField from '@/components/FormField'
+import Alert from '@/components/Alert'
 
-const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID || 'AVAko6odHX3mTKAL0agrKszZhfBgKGOM00SjEAr2NyZd5UuzNzRpR6ZSA-jgh4brZYH5ss0vD_yHA8Fm'
+const PAYPAL_CLIENT_ID =
+  import.meta.env.VITE_PAYPAL_CLIENT_ID ||
+  'AVAko6odHX3mTKAL0agrKszZhfBgKGOM00SjEAr2NyZd5UuzNzRpR6ZSA-jgh4brZYH5ss0vD_yHA8Fm'
 
-const EMPTY_FORM = { full_name: '', email: '', address1: '', address2: '', city: '', state: '', zipcode: '' }
+const EMPTY_FORM: ShippingAddress = {
+  full_name: '',
+  email: '',
+  address1: '',
+  address2: '',
+  city: '',
+  state: '',
+  zipcode: '',
+}
+
+const REQUIRED_FIELDS: Array<keyof ShippingAddress> = ['full_name', 'email', 'address1', 'city']
+
+const isAxiosErrorShape = (
+  err: unknown,
+): err is { response?: { data?: { error?: string; errors?: FieldErrors } } } =>
+  err !== null && typeof err === 'object' && 'response' in (err as Record<string, unknown>)
 
 const Checkout = () => {
   const { cartItems, getCartTotal, clearCart } = useCart()
   const { data: user } = useAuthQuery()
   const navigate = useNavigate()
-  const paypalRef = useRef(null)
+  const paypalRef = useRef<HTMLDivElement | null>(null)
 
-  const [formData, setFormData] = useState(EMPTY_FORM)
-  const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
+  const [formData, setFormData] = useState<ShippingAddress>(EMPTY_FORM)
   const [error, setError] = useState('')
-  const [errors, setErrors] = useState({})
+  const [errors, setErrors] = useState<FieldErrors>({})
   const [paypalLoaded, setPaypalLoaded] = useState(false)
   const [formValid, setFormValid] = useState(false)
 
-  useEffect(() => {
-    if (cartItems.length === 0) { navigate('/cart'); return }
-    if (user) {
-      axios.get('/account/api/manage-shipping')
-        .then(r => {
-          if (r.data && Object.keys(r.data).length > 0) {
-            setFormData({ ...r.data, email: r.data.email || user?.email || '' })
-          } else {
-            setFormData(p => ({ ...p, email: user?.email || '' }))
-          }
-        })
-        .catch(() => setFormData(p => ({ ...p, email: user?.email || '' })))
-        .finally(() => setLoading(false))
-    } else {
-      setLoading(false)
-    }
-  }, [user, cartItems, navigate])
+  const shippingQuery = useShippingQuery(Boolean(user))
+  const completeOrderMutation = useCompleteOrderMutation()
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
-    if (errors[e.target.name]) setErrors({ ...errors, [e.target.name]: null })
+  // Bounce empty cart back to /cart.
+  useEffect(() => {
+    if (cartItems.length === 0) navigate('/cart')
+  }, [cartItems.length, navigate])
+
+  // Seed form with the saved shipping address (when authenticated).
+  useEffect(() => {
+    if (!user) return
+    if (shippingQuery.data) {
+      const saved = shippingQuery.data
+      const hasSaved = Object.keys(saved).length > 0
+      setFormData((prev) => ({
+        ...prev,
+        ...(hasSaved ? saved : {}),
+        email: saved.email || user.email || prev.email,
+      }) as ShippingAddress)
+    } else if (shippingQuery.isError) {
+      setFormData((prev) => ({ ...prev, email: user.email || prev.email }))
+    }
+  }, [user, shippingQuery.data, shippingQuery.isError])
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+    if (errors[name]) {
+      setErrors((prev) => {
+        const next = { ...prev }
+        delete next[name]
+        return next
+      })
+    }
     setError('')
   }
 
   useEffect(() => {
-    const req = ['full_name', 'email', 'address1', 'city']
-    setFormValid(req.every(f => formData[f]?.trim()))
+    setFormValid(REQUIRED_FIELDS.every((f) => formData[f]?.trim().length > 0))
   }, [formData.full_name, formData.email, formData.address1, formData.city])
 
+  // Load the PayPal SDK once.
   useEffect(() => {
-    if (!window.paypal && !paypalLoaded) {
-      const script = document.createElement('script')
-      script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD&intent=capture&enable-funding=venmo`
-      script.async = true
-      script.onload = () => setPaypalLoaded(true)
-      document.body.appendChild(script)
-      return () => document.body.removeChild(script)
-    } else if (window.paypal && !paypalLoaded) {
+    if (window.paypal) {
       setPaypalLoaded(true)
+      return
+    }
+    if (paypalLoaded) return
+    const script = document.createElement('script')
+    script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD&intent=capture&enable-funding=venmo`
+    script.async = true
+    script.onload = () => setPaypalLoaded(true)
+    document.body.appendChild(script)
+    return () => {
+      if (script.parentNode) script.parentNode.removeChild(script)
     }
   }, [paypalLoaded])
 
+  const handleCompleteOrder = async () => {
+    setError('')
+    setErrors({})
+    try {
+      const result = await completeOrderMutation.mutateAsync({
+        cart_items: cartItems,
+        shipping: { ...formData, address2: formData.address2?.trim() || '' },
+      })
+      if (result.success) {
+        clearCart()
+        navigate('/payment-success', { state: { orderId: result.order_id } })
+      } else {
+        setError(result.error ?? 'Failed to complete order')
+        if (result.errors) setErrors(result.errors)
+        navigate('/payment-failed')
+      }
+    } catch (err) {
+      if (isAxiosErrorShape(err)) {
+        setError(err.response?.data?.error ?? 'Failed to complete order')
+        if (err.response?.data?.errors) setErrors(err.response.data.errors)
+      } else {
+        setError('Failed to complete order')
+      }
+      navigate('/payment-failed')
+    }
+  }
+
+  // Render PayPal buttons whenever the SDK is ready and we have a cart.
   useEffect(() => {
-    if (paypalLoaded && window.paypal && paypalRef.current && cartItems.length > 0) {
-      paypalRef.current.innerHTML = ''
-      window.paypal.Buttons({
+    if (!paypalLoaded || !window.paypal || !paypalRef.current || cartItems.length === 0) return
+    paypalRef.current.innerHTML = ''
+    window.paypal
+      .Buttons({
         style: { color: 'gold', shape: 'rect', layout: 'vertical' },
-        onInit: (_, actions) => {
+        onInit: (_data, actions) => {
           actions.disable()
           const check = () => {
-            const req = ['full_name', 'email', 'address1', 'city']
-            const valid = req.every(f => { const el = document.getElementById(f); return el?.value?.trim() })
-            valid ? actions.enable() : actions.disable()
+            const valid = REQUIRED_FIELDS.every((f) => {
+              const el = document.getElementById(f) as HTMLInputElement | null
+              return Boolean(el?.value?.trim())
+            })
+            if (valid) actions.enable()
+            else actions.disable()
           }
-          document.querySelectorAll('input[required]').forEach(el => {
+          document.querySelectorAll<HTMLInputElement>('input[required]').forEach((el) => {
             el.addEventListener('input', check)
             el.addEventListener('change', check)
           })
           check()
         },
-        createOrder: (_, actions) => actions.order.create({
-          purchase_units: [{ amount: { value: getCartTotal().toFixed(2) } }]
-        }),
-        onApprove: async (_, actions) => {
+        createOrder: (_data, actions) =>
+          actions.order.create({
+            purchase_units: [{ amount: { value: getCartTotal().toFixed(2) } }],
+          }),
+        onApprove: async (_data, actions) => {
           try {
             await actions.order.capture()
             await handleCompleteOrder()
@@ -97,33 +165,13 @@ const Checkout = () => {
           }
         },
         onError: () => navigate('/payment-failed'),
-      }).render(paypalRef.current).catch(() => {})
-    }
-  }, [paypalLoaded, cartItems, getCartTotal, navigate, formValid])
-
-  const handleCompleteOrder = async () => {
-    setError('')
-    setErrors({})
-    setSubmitting(true)
-    try {
-      const r = await axios.post('/payment/api/complete-order', {
-        cart_items: cartItems,
-        shipping: { ...formData, address2: formData.address2?.trim() || '' },
       })
-      if (r.data.success) {
-        clearCart()
-        navigate('/payment-success', { state: { orderId: r.data.order_id } })
-      }
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to complete order')
-      if (err.response?.data?.errors) setErrors(err.response.data.errors)
-      navigate('/payment-failed')
-    } finally {
-      setSubmitting(false)
-    }
-  }
+      .render(paypalRef.current)
+      .catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paypalLoaded, cartItems, formValid])
 
-  if (loading) return <PageSpinner />
+  if (user && shippingQuery.isPending) return <PageSpinner />
   if (cartItems.length === 0) return null
 
   return (
