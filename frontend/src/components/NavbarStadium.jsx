@@ -2,12 +2,14 @@ import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import { ShoppingCart, Menu, X, ChevronDown } from 'lucide-react'
 import { useCart } from '../context/CartContext'
-import { useAuth } from '../context/AuthContext'
+import { useAuthQuery } from '@/hooks/useAuthQuery'
+import { useLogoutMutation } from '@/hooks/useLogoutMutation'
 import InstagramLink from './InstagramLink'
 
 const NavbarStadium = () => {
   const { getCartItemCount } = useCart()
-  const { user, logout } = useAuth()
+  const { data: user } = useAuthQuery()
+  const logoutMutation = useLogoutMutation()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const cartCount = getCartItemCount()
@@ -15,7 +17,7 @@ const NavbarStadium = () => {
   const handleLogout = async (e) => {
     e.preventDefault()
     e.stopPropagation()
-    try { await logout() } catch (_) {}
+    try { await logoutMutation.mutateAsync() } catch (_) {}
     setUserMenuOpen(false)
     setMobileMenuOpen(false)
   }

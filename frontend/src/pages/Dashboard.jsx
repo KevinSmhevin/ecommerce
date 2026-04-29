@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuthQuery } from '@/hooks/useAuthQuery'
 import { Package, User, MapPin, Info } from 'lucide-react'
 import axios from '../config/axios'
 import PageSpinner from '../components/PageSpinner'
@@ -25,7 +25,7 @@ const DashboardCard = ({ to, icon: Icon, title, subtitle, meta }) => (
 )
 
 const Dashboard = () => {
-  const { user, loading: authLoading } = useAuth()
+  const { data: user, isPending: authLoading } = useAuthQuery()
   const navigate = useNavigate()
   const [dashboardData, setDashboardData] = useState(null)
   const [loading, setLoading] = useState(true)

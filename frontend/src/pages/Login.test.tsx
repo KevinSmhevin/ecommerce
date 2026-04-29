@@ -2,49 +2,60 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
 
-// ------------------------------------------------------------------
-// Mock AuthContext and react-router-dom BEFORE importing the component.
-// Each test can override mockLogin behaviour via vi.fn().
-// ------------------------------------------------------------------
-const mockLogin = vi.fn()
 const mockNavigate = vi.fn()
 
-vi.mock('../context/AuthContext', () => ({
-  useAuth: vi.fn(() => ({
-    user: null,
-    login: mockLogin,
-  })),
-}))
-
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom')
+vi.mock('@/config/axios', () => {
+  const isAxiosError = (err: unknown): err is { response?: { data?: { error?: string; errors?: unknown } } } =>
+    err !== null && typeof err === 'object' && 'response' in (err as Record<string, unknown>)
   return {
-    ...actual,
-    useNavigate: () => mockNavigate,
+    default: {
+      get: vi.fn(),
+      post: vi.fn(),
+      defaults: {},
+      interceptors: { request: { use: vi.fn() } },
+      isAxiosError,
+    },
   }
 })
 
-import Login from './Login'
-import { useAuth } from '../context/AuthContext'
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom')
+  return { ...actual, useNavigate: () => mockNavigate }
+})
 
-const renderLogin = () =>
-  render(
-    <MemoryRouter>
-      <Login />
-    </MemoryRouter>
+import Login from './Login'
+import axios from '@/config/axios'
+import { authKeys } from '@/hooks/useAuthQuery'
+import type { AuthUser } from '@/api/auth'
+
+const mockedGet = axios.get as ReturnType<typeof vi.fn>
+const mockedPost = axios.post as ReturnType<typeof vi.fn>
+
+const renderLogin = (initialUser: AuthUser | null = null) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: Infinity },
+      mutations: { retry: false },
+    },
+  })
+  if (initialUser) queryClient.setQueryData(authKeys.session(), initialUser)
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>{children}</MemoryRouter>
+    </QueryClientProvider>
   )
+  return render(<Login />, { wrapper })
+}
 
 describe('Login page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    // Default: unauthenticated
-    useAuth.mockReturnValue({ user: null, login: mockLogin })
+    mockedGet.mockResolvedValue({ data: { authenticated: false } })
   })
 
-  // -------------------------
-  // Rendering
-  // -------------------------
   describe('form rendering', () => {
     it('renders the Sign In heading', () => {
       renderLogin()
@@ -74,25 +85,17 @@ describe('Login page', () => {
 
     it('does not show an error alert initially', () => {
       renderLogin()
-      // No error classes visible initially
       expect(screen.queryByText(/invalid/i)).not.toBeInTheDocument()
     })
   })
 
-  // -------------------------
-  // Redirect when already logged in
-  // -------------------------
   describe('redirect when already authenticated', () => {
-    it('navigates to / immediately when user is already set', async () => {
-      useAuth.mockReturnValue({ user: { username: 'ash', email: 'ash@test.com' }, login: mockLogin })
-      renderLogin()
+    it('navigates to / immediately when user is already in the cache', async () => {
+      renderLogin({ username: 'ash', email: 'ash@test.com' })
       await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/'))
     })
   })
 
-  // -------------------------
-  // Form interaction
-  // -------------------------
   describe('form interaction', () => {
     it('updates username field on user input', async () => {
       const user = userEvent.setup()
@@ -109,25 +112,24 @@ describe('Login page', () => {
     })
   })
 
-  // -------------------------
-  // Successful submission
-  // -------------------------
   describe('successful login', () => {
-    it('calls login with username and password on form submit', async () => {
+    it('calls axios.post /account/api/login with username and password on submit', async () => {
       const user = userEvent.setup()
-      mockLogin.mockResolvedValueOnce({ success: true })
+      mockedPost.mockResolvedValueOnce({ data: { success: true, user: { username: 'ash', email: 'ash@x.com' } } })
 
       renderLogin()
       await user.type(screen.getByLabelText(/username/i), 'ash')
       await user.type(screen.getByLabelText(/password/i), 'pikachu')
       await user.click(screen.getByRole('button', { name: /sign in/i }))
 
-      expect(mockLogin).toHaveBeenCalledWith('ash', 'pikachu')
+      await waitFor(() => {
+        expect(mockedPost).toHaveBeenCalledWith('/account/api/login', { username: 'ash', password: 'pikachu' })
+      })
     })
 
     it('navigates to / on successful login', async () => {
       const user = userEvent.setup()
-      mockLogin.mockResolvedValueOnce({ success: true })
+      mockedPost.mockResolvedValueOnce({ data: { success: true, user: { username: 'ash', email: 'ash@x.com' } } })
 
       renderLogin()
       await user.type(screen.getByLabelText(/username/i), 'ash')
@@ -139,7 +141,7 @@ describe('Login page', () => {
 
     it('shows "Signing in..." text while the request is pending', async () => {
       const user = userEvent.setup()
-      mockLogin.mockReturnValueOnce(new Promise(() => {}))
+      mockedPost.mockReturnValueOnce(new Promise(() => {}))
 
       renderLogin()
       await user.type(screen.getByLabelText(/username/i), 'ash')
@@ -151,7 +153,7 @@ describe('Login page', () => {
 
     it('disables the submit button while loading', async () => {
       const user = userEvent.setup()
-      mockLogin.mockReturnValueOnce(new Promise(() => {}))
+      mockedPost.mockReturnValueOnce(new Promise(() => {}))
 
       renderLogin()
       await user.type(screen.getByLabelText(/username/i), 'ash')
@@ -162,13 +164,10 @@ describe('Login page', () => {
     })
   })
 
-  // -------------------------
-  // Failed submission
-  // -------------------------
   describe('failed login', () => {
-    it('shows the error message returned by the login function', async () => {
+    it('shows the error message returned by the API', async () => {
       const user = userEvent.setup()
-      mockLogin.mockResolvedValueOnce({ success: false, message: 'Invalid credentials' })
+      mockedPost.mockRejectedValueOnce({ response: { data: { error: 'Invalid credentials' } } })
 
       renderLogin()
       await user.type(screen.getByLabelText(/username/i), 'ash')
@@ -180,7 +179,7 @@ describe('Login page', () => {
 
     it('does not navigate on failed login', async () => {
       const user = userEvent.setup()
-      mockLogin.mockResolvedValueOnce({ success: false, message: 'Invalid credentials' })
+      mockedPost.mockRejectedValueOnce({ response: { data: { error: 'Invalid credentials' } } })
 
       renderLogin()
       await user.type(screen.getByLabelText(/username/i), 'ash')
@@ -193,7 +192,7 @@ describe('Login page', () => {
 
     it('re-enables the submit button after a failed login', async () => {
       const user = userEvent.setup()
-      mockLogin.mockResolvedValueOnce({ success: false, message: 'Bad credentials' })
+      mockedPost.mockRejectedValueOnce({ response: { data: { error: 'Bad credentials' } } })
 
       renderLogin()
       await user.type(screen.getByLabelText(/username/i), 'ash')
@@ -205,8 +204,8 @@ describe('Login page', () => {
 
     it('clears a previous error when a new submission starts', async () => {
       const user = userEvent.setup()
-      mockLogin
-        .mockResolvedValueOnce({ success: false, message: 'Invalid credentials' })
+      mockedPost
+        .mockRejectedValueOnce({ response: { data: { error: 'Invalid credentials' } } })
         .mockReturnValueOnce(new Promise(() => {}))
 
       renderLogin()
@@ -215,7 +214,6 @@ describe('Login page', () => {
       await user.click(screen.getByRole('button', { name: /sign in/i }))
       await waitFor(() => expect(screen.getByText('Invalid credentials')).toBeInTheDocument())
 
-      // Submit again — error should clear immediately
       await user.click(screen.getByRole('button'))
       await waitFor(() => expect(screen.queryByText('Invalid credentials')).not.toBeInTheDocument())
     })

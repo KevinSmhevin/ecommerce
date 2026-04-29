@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
-import { useAuth } from '../context/AuthContext'
+import { useAuthQuery } from '@/hooks/useAuthQuery'
 import axios from '../config/axios'
 import PageSpinner from '../components/PageSpinner'
 import FormField from '../components/FormField'
@@ -13,7 +13,7 @@ const EMPTY_FORM = { full_name: '', email: '', address1: '', address2: '', city:
 
 const Checkout = () => {
   const { cartItems, getCartTotal, clearCart } = useCart()
-  const { user } = useAuth()
+  const { data: user } = useAuthQuery()
   const navigate = useNavigate()
   const paypalRef = useRef(null)
 

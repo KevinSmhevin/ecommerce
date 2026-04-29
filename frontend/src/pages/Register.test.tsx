@@ -2,41 +2,55 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor, act, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
 
-const mockRegister = vi.fn()
 const mockNavigate = vi.fn()
 
-vi.mock('../context/AuthContext', () => ({
-  useAuth: vi.fn(() => ({
-    user: null,
-    register: mockRegister,
-  })),
-}))
-
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom')
+vi.mock('@/config/axios', () => {
+  const isAxiosError = (err: unknown): err is { response?: { data?: { error?: string; errors?: unknown } } } =>
+    err !== null && typeof err === 'object' && 'response' in (err as Record<string, unknown>)
   return {
-    ...actual,
-    useNavigate: () => mockNavigate,
+    default: {
+      get: vi.fn(),
+      post: vi.fn(),
+      defaults: {},
+      interceptors: { request: { use: vi.fn() } },
+      isAxiosError,
+    },
   }
 })
 
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom')
+  return { ...actual, useNavigate: () => mockNavigate }
+})
+
 import Register from './Register'
-import { useAuth } from '../context/AuthContext'
+import axios from '@/config/axios'
+import { authKeys } from '@/hooks/useAuthQuery'
+import type { AuthUser } from '@/api/auth'
 
-const renderRegister = () =>
-  render(
-    <MemoryRouter>
-      <Register />
-    </MemoryRouter>
+const mockedGet = axios.get as ReturnType<typeof vi.fn>
+const mockedPost = axios.post as ReturnType<typeof vi.fn>
+
+const renderRegister = (initialUser: AuthUser | null = null) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: Infinity },
+      mutations: { retry: false },
+    },
+  })
+  if (initialUser) queryClient.setQueryData(authKeys.session(), initialUser)
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>{children}</MemoryRouter>
+    </QueryClientProvider>
   )
+  return render(<Register />, { wrapper })
+}
 
-/**
- * Fill every required field using fireEvent (fast, synchronous) and click submit.
- * Register.jsx uses controlled inputs with `name` attributes — fireEvent.change
- * fires the onChange handler that calls setFormData.
- */
-const fillAndSubmit = (overrides = {}) => {
+const fillAndSubmit = (overrides: Partial<{ username: string; email: string; password1: string; password2: string }> = {}) => {
   const vals = {
     username: 'ash',
     email: 'ash@pallet.com',
@@ -54,17 +68,13 @@ const fillAndSubmit = (overrides = {}) => {
 describe('Register page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    useAuth.mockReturnValue({ user: null, register: mockRegister })
+    mockedGet.mockResolvedValue({ data: { authenticated: false } })
   })
 
   afterEach(() => {
-    // Ensure real timers are restored even if a test throws mid-way
     vi.useRealTimers()
   })
 
-  // -------------------------
-  // Rendering
-  // -------------------------
   describe('form rendering', () => {
     it('renders the Create Account heading', () => {
       renderRegister()
@@ -91,9 +101,6 @@ describe('Register page', () => {
     })
   })
 
-  // -------------------------
-  // Field input
-  // -------------------------
   describe('field input', () => {
     it('updates the username field on input', async () => {
       const user = userEvent.setup()
@@ -110,31 +117,27 @@ describe('Register page', () => {
     })
   })
 
-  // -------------------------
-  // Calls register with correct data
-  // -------------------------
   describe('form submission', () => {
-    it('calls register with the full form data on submit', async () => {
-      mockRegister.mockResolvedValueOnce({ success: true, message: 'Check your email' })
+    it('calls axios.post /account/api/register with the full form data on submit', async () => {
+      mockedPost.mockResolvedValueOnce({ data: { success: true, message: 'Check your email' } })
 
       renderRegister()
       fillAndSubmit()
 
-      expect(mockRegister).toHaveBeenCalledWith({
-        username: 'ash',
-        email: 'ash@pallet.com',
-        password1: 'pikachu1',
-        password2: 'pikachu1',
+      await waitFor(() => {
+        expect(mockedPost).toHaveBeenCalledWith('/account/api/register', {
+          username: 'ash',
+          email: 'ash@pallet.com',
+          password1: 'pikachu1',
+          password2: 'pikachu1',
+        })
       })
     })
   })
 
-  // -------------------------
-  // Successful registration
-  // -------------------------
   describe('successful registration', () => {
     it('shows the Account Created success screen', async () => {
-      mockRegister.mockResolvedValueOnce({ success: true, message: 'Check your email' })
+      mockedPost.mockResolvedValueOnce({ data: { success: true, message: 'Check your email' } })
 
       renderRegister()
       fillAndSubmit()
@@ -145,7 +148,7 @@ describe('Register page', () => {
     })
 
     it('shows the email verification instruction after success', async () => {
-      mockRegister.mockResolvedValueOnce({ success: true, message: 'Check your email' })
+      mockedPost.mockResolvedValueOnce({ data: { success: true, message: 'Check your email' } })
 
       renderRegister()
       fillAndSubmit()
@@ -156,7 +159,7 @@ describe('Register page', () => {
     })
 
     it('renders a Go to Login link on the success screen', async () => {
-      mockRegister.mockResolvedValueOnce({ success: true, message: 'Check your email' })
+      mockedPost.mockResolvedValueOnce({ data: { success: true, message: 'Check your email' } })
 
       renderRegister()
       fillAndSubmit()
@@ -167,37 +170,29 @@ describe('Register page', () => {
       })
     })
 
-    // The setTimeout-based navigation is tested using fake timers.
-    // We guard carefully: useFakeTimers → render → submit → let Promise resolve
-    // with real microtask queue → then advance fake timers.
     it('navigates to / after 3 seconds on success', async () => {
       vi.useFakeTimers({ shouldAdvanceTime: false })
 
-      mockRegister.mockResolvedValueOnce({ success: true, message: 'Check your email' })
+      mockedPost.mockResolvedValueOnce({ data: { success: true, message: 'Check your email' } })
 
       renderRegister()
-
-      // fillAndSubmit inside act so React can flush the synchronous state updates
       act(() => fillAndSubmit())
 
-      // Flush the resolved Promise (mockRegister) — must flush microtasks
+      // Flush microtasks so the mutation resolves and the success effect schedules its setTimeout
       await act(async () => {
+        await Promise.resolve()
         await Promise.resolve()
       })
 
-      // At this point setSuccess(true) should have fired; advance the 3s timer
       act(() => vi.advanceTimersByTime(3000))
 
       expect(mockNavigate).toHaveBeenCalledWith('/')
     })
   })
 
-  // -------------------------
-  // Loading state
-  // -------------------------
   describe('loading state', () => {
     it('shows "Creating account..." while the request is in flight', async () => {
-      mockRegister.mockReturnValueOnce(new Promise(() => {})) // never resolves
+      mockedPost.mockReturnValueOnce(new Promise(() => {}))
 
       renderRegister()
       fillAndSubmit()
@@ -208,7 +203,7 @@ describe('Register page', () => {
     })
 
     it('disables the submit button while loading', async () => {
-      mockRegister.mockReturnValueOnce(new Promise(() => {}))
+      mockedPost.mockReturnValueOnce(new Promise(() => {}))
 
       renderRegister()
       fillAndSubmit()
@@ -217,15 +212,10 @@ describe('Register page', () => {
     })
   })
 
-  // -------------------------
-  // Failed registration
-  // -------------------------
   describe('failed registration', () => {
     it('displays the top-level error message on failure', async () => {
-      mockRegister.mockResolvedValueOnce({
-        success: false,
-        message: 'A user with that username already exists.',
-        errors: {},
+      mockedPost.mockRejectedValueOnce({
+        response: { data: { error: 'A user with that username already exists.', errors: {} } },
       })
 
       renderRegister()
@@ -237,10 +227,13 @@ describe('Register page', () => {
     })
 
     it('displays field-level errors beneath the relevant input', async () => {
-      mockRegister.mockResolvedValueOnce({
-        success: false,
-        message: 'Registration failed',
-        errors: { password2: ["The two password fields didn't match."] },
+      mockedPost.mockRejectedValueOnce({
+        response: {
+          data: {
+            error: 'Registration failed',
+            errors: { password2: ["The two password fields didn't match."] },
+          },
+        },
       })
 
       renderRegister()
@@ -252,7 +245,7 @@ describe('Register page', () => {
     })
 
     it('does not navigate on failed registration', async () => {
-      mockRegister.mockResolvedValueOnce({ success: false, message: 'Error', errors: {} })
+      mockedPost.mockRejectedValueOnce({ response: { data: { error: 'Error', errors: {} } } })
 
       renderRegister()
       fillAndSubmit()
@@ -262,7 +255,7 @@ describe('Register page', () => {
     })
 
     it('re-enables the submit button after a failed registration', async () => {
-      mockRegister.mockResolvedValueOnce({ success: false, message: 'Error', errors: {} })
+      mockedPost.mockRejectedValueOnce({ response: { data: { error: 'Error', errors: {} } } })
 
       renderRegister()
       fillAndSubmit()
@@ -271,7 +264,7 @@ describe('Register page', () => {
     })
 
     it('still shows the form (not the success screen) after a failure', async () => {
-      mockRegister.mockResolvedValueOnce({ success: false, message: 'Error', errors: {} })
+      mockedPost.mockRejectedValueOnce({ response: { data: { error: 'Error', errors: {} } } })
 
       renderRegister()
       fillAndSubmit()

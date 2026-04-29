@@ -1,28 +1,32 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import FormField from '../components/FormField'
-import Alert from '../components/Alert'
+import { useAuthQuery } from '@/hooks/useAuthQuery'
+import { useLoginMutation } from '@/hooks/useLoginMutation'
+import FormField from '@/components/FormField'
+import Alert from '@/components/Alert'
 
 const Login = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const { login, user } = useAuth()
+  const { data: user } = useAuthQuery()
+  const loginMutation = useLoginMutation()
   const navigate = useNavigate()
 
-  useEffect(() => { if (user) navigate('/') }, [user, navigate])
+  useEffect(() => {
+    if (user) navigate('/')
+  }, [user, navigate])
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
-    setLoading(true)
-    const result = await login(username, password)
+    const result = await loginMutation.mutateAsync({ username, password })
     if (result.success) navigate('/')
     else setError(result.message)
-    setLoading(false)
   }
+
+  const loading = loginMutation.isPending
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4">

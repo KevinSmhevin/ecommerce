@@ -1,4 +1,11 @@
-const Alert = ({ type = 'error', children }) => {
+import type { ReactNode } from 'react'
+
+interface AlertProps {
+  type?: 'error' | 'success'
+  children: ReactNode
+}
+
+const Alert = ({ type = 'error', children }: AlertProps) => {
   const cls = type === 'success'
     ? 'bg-green-50 border-green-200 text-green-700'
     : 'bg-red-50 border-red-200 text-red-700'

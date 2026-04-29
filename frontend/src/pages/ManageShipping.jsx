@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuthQuery } from '@/hooks/useAuthQuery'
 import axios from '../config/axios'
 import PageSpinner from '../components/PageSpinner'
 import FormField from '../components/FormField'
@@ -9,7 +9,7 @@ import Alert from '../components/Alert'
 const EMPTY = { full_name: '', email: '', address1: '', address2: '', city: '', state: '', zipcode: '' }
 
 const ManageShipping = () => {
-  const { user, loading: authLoading } = useAuth()
+  const { data: user, isPending: authLoading } = useAuthQuery()
   const navigate = useNavigate()
   const [formData, setFormData] = useState(EMPTY)
   const [error, setError] = useState('')

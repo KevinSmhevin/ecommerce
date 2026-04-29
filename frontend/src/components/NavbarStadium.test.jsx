@@ -2,12 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, act, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import NavbarStadium from './NavbarStadium'
 import { CartProvider } from '../context/CartContext'
-import { AuthProvider } from '../context/AuthContext'
 
-// Prevent real HTTP calls from AuthContext.checkAuth and the axios config module.
-vi.mock('../config/axios', () => ({
+// Prevent real HTTP calls from useAuthQuery and the axios config module.
+vi.mock('@/config/axios', () => ({
   default: {
     get: vi.fn(),
     post: vi.fn(),
@@ -16,19 +16,25 @@ vi.mock('../config/axios', () => ({
   },
 }))
 
-import axios from '../config/axios'
+import axios from '@/config/axios'
 
-// Render the navbar with all required context providers.
-const renderNavbar = () =>
-  render(
-    <MemoryRouter>
-      <AuthProvider>
+const renderNavbar = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: Infinity },
+      mutations: { retry: false },
+    },
+  })
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
         <CartProvider>
           <NavbarStadium />
         </CartProvider>
-      </AuthProvider>
-    </MemoryRouter>
+      </MemoryRouter>
+    </QueryClientProvider>
   )
+}
 
 describe('NavbarStadium component', () => {
   beforeEach(() => {
@@ -38,9 +44,6 @@ describe('NavbarStadium component', () => {
     axios.get.mockResolvedValue({ data: { authenticated: false } })
   })
 
-  // -------------------------
-  // Brand / logo
-  // -------------------------
   describe('brand logo', () => {
     it('renders the POKEBIN brand name', async () => {
       renderNavbar()
@@ -56,9 +59,6 @@ describe('NavbarStadium component', () => {
     })
   })
 
-  // -------------------------
-  // Navigation links — unauthenticated
-  // -------------------------
   describe('navigation links (unauthenticated)', () => {
     it('renders a Cart link', async () => {
       renderNavbar()
@@ -95,15 +95,11 @@ describe('NavbarStadium component', () => {
     it('does not render a username when unauthenticated', async () => {
       renderNavbar()
       await waitFor(() => expect(screen.getByText('POKEBIN')).toBeInTheDocument())
-      // Wait for auth check to finish, then assert no username
       await waitFor(() => expect(axios.get).toHaveBeenCalled())
       expect(screen.queryByText('ashketchum')).not.toBeInTheDocument()
     })
   })
 
-  // -------------------------
-  // Navigation links — authenticated
-  // -------------------------
   describe('navigation links (authenticated)', () => {
     it('renders the username in the navbar when authenticated', async () => {
       axios.get.mockResolvedValue({
@@ -119,7 +115,6 @@ describe('NavbarStadium component', () => {
       })
       renderNavbar()
       await waitFor(() => expect(screen.getAllByText('ashketchum').length).toBeGreaterThan(0))
-      // Desktop Login link should be gone
       expect(screen.queryByRole('link', { name: /^login$/i })).not.toBeInTheDocument()
     })
 
@@ -133,9 +128,6 @@ describe('NavbarStadium component', () => {
     })
   })
 
-  // -------------------------
-  // Cart item count badge
-  // -------------------------
   describe('cart item count badge', () => {
     it('does not show a cart badge when the cart is empty', async () => {
       renderNavbar()
@@ -155,9 +147,6 @@ describe('NavbarStadium component', () => {
     })
   })
 
-  // -------------------------
-  // Instagram link
-  // -------------------------
   describe('Instagram link', () => {
     it('renders an Instagram link with correct href', async () => {
       renderNavbar()
@@ -177,32 +166,25 @@ describe('NavbarStadium component', () => {
     })
   })
 
-  // -------------------------
-  // Logout
-  // -------------------------
   describe('logout', () => {
     it('calls the logout API when logout button is clicked', async () => {
       const user = userEvent.setup()
 
-      // All axios.get calls return authenticated user
       axios.get.mockResolvedValue({
         data: { authenticated: true, user: { username: 'ashketchum', email: 'ash@pallet.com' } },
       })
       axios.post.mockResolvedValueOnce({ data: { success: true } })
 
       renderNavbar()
-      // Wait for the authenticated username to appear in the DOM
       await waitFor(() => expect(screen.getAllByText('ashketchum').length).toBeGreaterThan(0))
 
-      // Open the desktop user dropdown
       const usernameBtn = screen.getByRole('button', { name: /ashketchum/i })
       await act(async () => user.click(usernameBtn))
 
-      // Click logout
       const logoutBtn = screen.getByRole('button', { name: /logout/i })
       await act(async () => user.click(logoutBtn))
 
-      expect(axios.post).toHaveBeenCalledWith('/account/api/logout', {})
+      await waitFor(() => expect(axios.post).toHaveBeenCalledWith('/account/api/logout', {}))
     })
   })
 })

@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuthQuery } from '@/hooks/useAuthQuery'
 import axios from '../config/axios'
 import PageSpinner from '../components/PageSpinner'
 import OrderCard from '../components/OrderCard'
 
 const TrackOrders = () => {
-  const { user, loading: authLoading } = useAuth()
+  const { data: user, isPending: authLoading } = useAuthQuery()
   const navigate = useNavigate()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)

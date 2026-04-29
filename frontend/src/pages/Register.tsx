@@ -1,40 +1,59 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import FormField from '../components/FormField'
-import Alert from '../components/Alert'
+import { useAuthQuery } from '@/hooks/useAuthQuery'
+import { useRegisterMutation } from '@/hooks/useRegisterMutation'
+import type { FieldErrors, RegisterPayload } from '@/api/auth'
+import FormField from '@/components/FormField'
+import Alert from '@/components/Alert'
+
+const EMPTY_FORM: RegisterPayload = { username: '', email: '', password1: '', password2: '' }
 
 const Register = () => {
-  const [formData, setFormData] = useState({ username: '', email: '', password1: '', password2: '' })
+  const [formData, setFormData] = useState<RegisterPayload>(EMPTY_FORM)
   const [error, setError] = useState('')
-  const [errors, setErrors] = useState({})
-  const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState<FieldErrors>({})
   const [success, setSuccess] = useState(false)
-  const { register, user } = useAuth()
+  const { data: user } = useAuthQuery()
+  const registerMutation = useRegisterMutation()
   const navigate = useNavigate()
 
-  useEffect(() => { if (user) navigate('/') }, [user, navigate])
+  useEffect(() => {
+    if (user) navigate('/')
+  }, [user, navigate])
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
-    if (errors[e.target.name]) setErrors({ ...errors, [e.target.name]: null })
+  useEffect(() => {
+    if (!success) return
+    const timer = setTimeout(() => navigate('/'), 3000)
+    return () => clearTimeout(timer)
+  }, [success, navigate])
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+    if (errors[name]) {
+      setErrors((prev) => {
+        const next = { ...prev }
+        delete next[name]
+        return next
+      })
+    }
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
     setErrors({})
-    setLoading(true)
-    const result = await register(formData)
+    const result = await registerMutation.mutateAsync(formData)
     if (result.success) {
       setSuccess(true)
-      setTimeout(() => navigate('/'), 3000)
     } else {
       setError(result.message)
       if (result.errors) setErrors(result.errors)
     }
-    setLoading(false)
   }
+
+  const loading = registerMutation.isPending
 
   if (success) {
     return (
