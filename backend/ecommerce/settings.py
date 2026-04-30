@@ -96,6 +96,7 @@ INSTALLED_APPS = [
     'cart',
     'account',
     'payment',
+    'ebay',
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
@@ -371,4 +372,18 @@ CORS_ALLOW_METHODS = [
     'PATCH',
     'POST',
     'PUT',
+]
+
+# eBay integration
+# Set EBAY_ENV='sandbox' against developer.ebay.com sandbox; 'production' for live.
+# All other vars come from the eBay developer keyset (App ID, Cert ID, Dev ID, RuName).
+EBAY_ENV = env('EBAY_ENV', default='sandbox')
+EBAY_APP_ID = env('EBAY_APP_ID', default='')
+EBAY_CERT_ID = env('EBAY_CERT_ID', default='')
+EBAY_DEV_ID = env('EBAY_DEV_ID', default='')
+EBAY_RU_NAME = env('EBAY_RU_NAME', default='')
+# Optional comma-separated allowlist used as a backstop when the
+# EbayCategoryMapping table is empty (e.g. before initial admin setup).
+EBAY_STORE_CATEGORY_IDS = [
+    s.strip() for s in env('EBAY_STORE_CATEGORY_IDS', default='').split(',') if s.strip()
 ]

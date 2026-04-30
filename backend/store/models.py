@@ -50,9 +50,11 @@ class Product(models.Model):
     image4 = models.ImageField(upload_to='images/', blank=True, null=True)
 
     stock = models.PositiveIntegerField(default=0)
-    
+
     units_sold = models.PositiveIntegerField(default=0)
-    
+
+    ebay_listing_id = models.CharField(max_length=64, unique=True, null=True, blank=True, db_index=True)
+
     class Meta:
     
         verbose_name_plural = 'products'
