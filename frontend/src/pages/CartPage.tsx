@@ -12,7 +12,7 @@ const CartItem = ({ item, onUpdate, onRemove }: CartItemProps) => (
   <div className="bg-white border border-black/20 rounded-2xl p-5 flex flex-col sm:flex-row gap-4">
     <div className="w-full sm:w-28 h-28 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center p-2">
       {item.image_url ? (
-        <img src={item.image_url} alt={item.title} className="max-w-full max-h-full object-contain" />
+        <img src={item.image_url} alt={item.title} loading="lazy" decoding="async" className="max-w-full max-h-full object-contain" />
       ) : (
         <span className="text-gray-300 text-xs font-bold uppercase tracking-widest">No Image</span>
       )}

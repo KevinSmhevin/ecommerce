@@ -74,6 +74,8 @@ const ProductDetail = () => {
                       key={selectedIndex}
                       src={mainImage}
                       alt={product.title}
+                      decoding="async"
+                      fetchPriority="high"
                       className="max-w-full max-h-full object-contain transition-all duration-300"
                     />
                     {images.length > 1 && (
@@ -108,7 +110,7 @@ const ProductDetail = () => {
                         selectedIndex === i ? 'border-black scale-105' : 'border-black/10 hover:border-black/30'
                       }`}
                     >
-                      <img src={img} alt={`View ${i + 1}`} className="w-full h-full object-contain p-1" />
+                      <img src={img} alt={`View ${i + 1}`} loading="lazy" decoding="async" className="w-full h-full object-contain p-1" />
                     </button>
                   ))}
                 </div>

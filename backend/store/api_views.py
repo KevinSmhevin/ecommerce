@@ -12,13 +12,13 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=True, methods=['get'])
     def products(self, request, pk=None):
         category = self.get_object()
-        products = Product.objects.filter(category=category, stock__gt=0)
+        products = Product.objects.filter(category=category, stock__gt=0).select_related('category')
         serializer = ProductSerializer(products, many=True, context={'request': request})
         return Response(serializer.data)
 
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Product.objects.filter(stock__gt=0)
+    queryset = Product.objects.filter(stock__gt=0).select_related('category')
     serializer_class = ProductSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'description', 'brand']
@@ -27,7 +27,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_field = 'slug'
 
     def get_queryset(self):
-        queryset = Product.objects.filter(stock__gt=0)
+        queryset = Product.objects.filter(stock__gt=0).select_related('category')
         category = self.request.query_params.get('category', None)
         if category:
             queryset = queryset.filter(category__slug=category)
@@ -44,7 +44,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         if category_slug:
             try:
                 category = Category.objects.get(slug=category_slug)
-                products = self.queryset.filter(category=category)
+                products = self.get_queryset().filter(category=category)
                 serializer = self.get_serializer(products, many=True)
                 return Response(serializer.data)
             except Category.DoesNotExist:
