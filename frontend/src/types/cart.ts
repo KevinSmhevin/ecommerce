@@ -12,4 +12,6 @@ export interface CartContextValue {
   clearCart: () => void
   getCartTotal: () => number
   getCartItemCount: () => number
+  removedItems: string[]
+  dismissRemovedNotice: () => void
 }

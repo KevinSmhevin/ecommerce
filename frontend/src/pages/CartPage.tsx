@@ -61,8 +61,38 @@ const CartItem = ({ item, onUpdate, onRemove }: CartItemProps) => (
   </div>
 )
 
+const RemovedNotice = ({ count, onDismiss }: { count: number; onDismiss: () => void }) => (
+  <div
+    role="status"
+    data-testid="cart-removed-notice"
+    className="bg-yellow-50 border-2 border-yellow-300 rounded-xl px-4 py-3 mb-6 flex items-center justify-between gap-4"
+  >
+    <p className="text-sm font-bold text-yellow-900">
+      {count === 1
+        ? '1 item was removed because it is no longer available.'
+        : `${count} items were removed because they are no longer available.`}
+    </p>
+    <button
+      type="button"
+      onClick={onDismiss}
+      className="text-xs text-yellow-900 font-black uppercase tracking-widest hover:text-yellow-700 transition-colors"
+    >
+      Dismiss
+    </button>
+  </div>
+)
+
 const CartPage = () => {
-  const { cartItems, removeFromCart, updateQuantity, getCartTotal, clearCart } = useCart()
+  const {
+    cartItems,
+    removeFromCart,
+    updateQuantity,
+    getCartTotal,
+    clearCart,
+    removedItems,
+    dismissRemovedNotice,
+  } = useCart()
+  const removedCount = removedItems.length
 
   if (cartItems.length === 0) {
     return (
@@ -72,6 +102,9 @@ const CartPage = () => {
           style={{ boxShadow: '4px 4px 0 #000' }}
         >
           <h1 className="text-2xl font-black text-black uppercase tracking-widest mb-3">Your Cart</h1>
+          {removedCount > 0 ? (
+            <RemovedNotice count={removedCount} onDismiss={dismissRemovedNotice} />
+          ) : null}
           <p className="text-gray-500 text-sm font-bold uppercase tracking-wider mb-8">Your cart is empty.</p>
           <Link
             to="/"
@@ -87,6 +120,9 @@ const CartPage = () => {
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {removedCount > 0 ? (
+          <RemovedNotice count={removedCount} onDismiss={dismissRemovedNotice} />
+        ) : null}
 
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-black text-black uppercase tracking-widest">Your Cart</h1>

@@ -1,5 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import axios from '@/config/axios'
+import { fetchProductBySlug } from '@/api/products'
 import type { Product } from '@/types/api'
 import type { CartContextValue, CartItem } from '@/types/cart'
 
@@ -17,23 +19,89 @@ interface CartProviderProps {
   children: ReactNode
 }
 
-export const CartProvider = ({ children }: CartProviderProps) => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([])
+const hydrateFromStorage = (): CartItem[] => {
+  if (typeof window === 'undefined') return []
+  const saved = window.localStorage.getItem('cart')
+  if (!saved) return []
+  try {
+    const parsed = JSON.parse(saved) as CartItem[]
+    return Array.isArray(parsed) ? parsed : []
+  } catch (error) {
+    console.error('Error loading cart from localStorage:', error)
+    return []
+  }
+}
 
-  useEffect(() => {
-    const savedCart = localStorage.getItem('cart')
-    if (!savedCart) return
-    try {
-      const parsed = JSON.parse(savedCart) as CartItem[]
-      if (Array.isArray(parsed)) setCartItems(parsed)
-    } catch (error) {
-      console.error('Error loading cart from localStorage:', error)
-    }
-  }, [])
+export const CartProvider = ({ children }: CartProviderProps) => {
+  const [cartItems, setCartItems] = useState<CartItem[]>(hydrateFromStorage)
+  const [removedItems, setRemovedItems] = useState<string[]>([])
+  const reconciledRef = useRef(false)
 
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cartItems))
   }, [cartItems])
+
+  // Reconcile against the live catalog on mount: drop deleted/sold-out items,
+  // refresh price/stock on survivors, cap quantity to current stock. Network
+  // errors other than 404 leave items untouched so a flaky connection never
+  // empties a real cart.
+  useEffect(() => {
+    if (reconciledRef.current) return
+    reconciledRef.current = true
+
+    const itemsAtMount = cartItems
+    if (itemsAtMount.length === 0) return
+
+    let cancelled = false
+
+    void (async () => {
+      const results = await Promise.allSettled(
+        itemsAtMount.map((item) => fetchProductBySlug(item.slug)),
+      )
+      if (cancelled) return
+
+      const updates = new Map<string, Product | null>()
+      const dropped: string[] = []
+
+      itemsAtMount.forEach((item, idx) => {
+        const result = results[idx]
+        if (result.status === 'rejected') {
+          if (axios.isAxiosError(result.reason) && result.reason.response?.status === 404) {
+            updates.set(item.slug, null)
+            dropped.push(item.slug)
+          }
+          return
+        }
+        const fresh = result.value
+        if (!fresh.stock || fresh.stock <= 0) {
+          updates.set(item.slug, null)
+          dropped.push(item.slug)
+        } else {
+          updates.set(item.slug, fresh)
+        }
+      })
+
+      if (updates.size === 0) return
+
+      setCartItems((prev) =>
+        prev
+          .map((item) => {
+            if (!updates.has(item.slug)) return item
+            const fresh = updates.get(item.slug)
+            if (fresh === null || fresh === undefined) return null
+            return { ...fresh, quantity: Math.min(item.quantity, fresh.stock) }
+          })
+          .filter((item): item is CartItem => item !== null),
+      )
+      if (dropped.length > 0) setRemovedItems(dropped)
+    })()
+
+    return () => {
+      cancelled = true
+    }
+    // Intentional one-shot reconciliation against the cart as it was at mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const addToCart = useCallback((product: Product, quantity: number = 1) => {
     setCartItems((prevItems) => {
@@ -77,6 +145,10 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     setCartItems([])
   }, [])
 
+  const dismissRemovedNotice = useCallback(() => {
+    setRemovedItems([])
+  }, [])
+
   const getCartTotal = useCallback(
     () => cartItems.reduce((total, item) => total + parseFloat(item.price) * item.quantity, 0),
     [cartItems],
@@ -96,8 +168,20 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       clearCart,
       getCartTotal,
       getCartItemCount,
+      removedItems,
+      dismissRemovedNotice,
     }),
-    [cartItems, addToCart, removeFromCart, updateQuantity, clearCart, getCartTotal, getCartItemCount],
+    [
+      cartItems,
+      addToCart,
+      removeFromCart,
+      updateQuantity,
+      clearCart,
+      getCartTotal,
+      getCartItemCount,
+      removedItems,
+      dismissRemovedNotice,
+    ],
   )
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
