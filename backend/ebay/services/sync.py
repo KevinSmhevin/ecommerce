@@ -78,12 +78,18 @@ class SyncService:
         mapping_lookup = self._load_category_mappings()
         allowlist = set(getattr(settings, 'EBAY_STORE_CATEGORY_IDS', []) or [])
         unsellable_skus: set[str] = set()
+        seen_skus: set[str] = set()
 
         for item in self.client.iter_inventory_items():
             sku = item.get('sku')
             if not sku:
                 report.skipped += 1
                 continue
+            # eBay can re-yield a SKU across overlapping pages; process it once
+            # so counts don't double and a sku can't be both synced and stale.
+            if sku in seen_skus:
+                continue
+            seen_skus.add(sku)
 
             try:
                 self._sync_one(item, mapping_lookup, allowlist, report, unsellable_skus)

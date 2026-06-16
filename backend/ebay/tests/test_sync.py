@@ -300,6 +300,15 @@ class SyncServiceTests(TestCase):
         self.assertEqual(report.deactivated, 0)
         self.assertEqual(Product.objects.get(ebay_listing_id='GONE').stock, 5)
 
+    def test_duplicate_sku_in_feed_is_processed_once(self):
+        items = [_inventory_item(), _inventory_item()]
+        client = _FakeClient(items=items, offers_by_sku={'SKU-1': [_offer()]})
+        with _patch_image_download():
+            report = SyncService(client=client).sync_all()
+
+        self.assertEqual((report.created, report.updated), (1, 0))
+        self.assertEqual(Product.objects.filter(ebay_listing_id='SKU-1').count(), 1)
+
     def test_empty_feed_does_not_deactivate_anything(self):
         self._ebay_product('SKU-1', stock=4)
         report = SyncService(client=_FakeClient(items=[], offers_by_sku={})).sync_all()
