@@ -275,16 +275,6 @@ class SyncServiceTests(TestCase):
             ebay_listing_id=ebay_listing_id,
         )
 
-    def test_deactivates_product_no_longer_in_feed(self):
-        self._ebay_product('GONE', stock=5)
-        client = _FakeClient(items=[_inventory_item()], offers_by_sku={'SKU-1': [_offer()]})
-        with _patch_image_download():
-            report = SyncService(client=client).sync_all()
-
-        self.assertEqual(report.deactivated, 1)
-        self.assertEqual(Product.objects.get(ebay_listing_id='GONE').stock, 0)
-        self.assertEqual(Product.objects.get(ebay_listing_id='SKU-1').stock, 4)
-
     def test_deactivates_product_when_offer_becomes_unpublished(self):
         client = _FakeClient(items=[_inventory_item(stock=4)], offers_by_sku={'SKU-1': [_offer()]})
         with _patch_image_download():
@@ -299,6 +289,24 @@ class SyncServiceTests(TestCase):
         self.assertEqual(report.deactivated, 1)
         self.assertEqual(Product.objects.get(ebay_listing_id='SKU-1').stock, 0)
 
+    def test_does_not_deactivate_product_absent_from_feed(self):
+        # A SKU missing from the feed entirely (vs. positively seen with no
+        # offer) is left alone — a paging gap must not wipe the catalog.
+        self._ebay_product('GONE', stock=5)
+        client = _FakeClient(items=[_inventory_item()], offers_by_sku={'SKU-1': [_offer()]})
+        with _patch_image_download():
+            report = SyncService(client=client).sync_all()
+
+        self.assertEqual(report.deactivated, 0)
+        self.assertEqual(Product.objects.get(ebay_listing_id='GONE').stock, 5)
+
+    def test_empty_feed_does_not_deactivate_anything(self):
+        self._ebay_product('SKU-1', stock=4)
+        report = SyncService(client=_FakeClient(items=[], offers_by_sku={})).sync_all()
+
+        self.assertEqual(report.deactivated, 0)
+        self.assertEqual(Product.objects.get(ebay_listing_id='SKU-1').stock, 4)
+
     def test_errored_item_is_not_deactivated(self):
         self._ebay_product('SKU-1', stock=3)
         bad_offer = _offer()
@@ -311,9 +319,15 @@ class SyncServiceTests(TestCase):
         self.assertEqual(Product.objects.get(ebay_listing_id='SKU-1').stock, 3)
 
     def test_dry_run_does_not_deactivate(self):
-        self._ebay_product('GONE', stock=5)
-        client = _FakeClient(items=[_inventory_item()], offers_by_sku={'SKU-1': [_offer()]})
-        report = SyncService(client=client, dry_run=True).sync_all()
+        client = _FakeClient(items=[_inventory_item(stock=4)], offers_by_sku={'SKU-1': [_offer()]})
+        with _patch_image_download():
+            SyncService(client=client).sync_all()
+
+        client2 = _FakeClient(
+            items=[_inventory_item(stock=4)],
+            offers_by_sku={'SKU-1': [_offer(status='UNPUBLISHED')]},
+        )
+        report = SyncService(client=client2, dry_run=True).sync_all()
 
         self.assertEqual(report.deactivated, 0)
-        self.assertEqual(Product.objects.get(ebay_listing_id='GONE').stock, 5)
+        self.assertEqual(Product.objects.get(ebay_listing_id='SKU-1').stock, 4)

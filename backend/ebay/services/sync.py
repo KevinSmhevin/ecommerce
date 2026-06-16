@@ -77,7 +77,7 @@ class SyncService:
         report = SyncReport()
         mapping_lookup = self._load_category_mappings()
         allowlist = set(getattr(settings, 'EBAY_STORE_CATEGORY_IDS', []) or [])
-        live_skus: set[str] = set()
+        unsellable_skus: set[str] = set()
 
         for item in self.client.iter_inventory_items():
             sku = item.get('sku')
@@ -86,32 +86,30 @@ class SyncService:
                 continue
 
             try:
-                if self._sync_one(item, mapping_lookup, allowlist, report):
-                    live_skus.add(sku)
+                self._sync_one(item, mapping_lookup, allowlist, report, unsellable_skus)
             except Exception as exc:  # noqa: BLE001 — per-item isolation
                 logger.exception('sync_ebay failed for sku=%s', sku)
                 report.errors += 1
                 report.error_details.append(f'{sku}: {exc}')
-                # Keep the product live: a transient error this sweep must not
-                # masquerade as "removed from eBay" and zero its stock.
-                live_skus.add(sku)
                 self._record_error(sku, exc)
 
         if not self.dry_run:
-            self._deactivate_missing(live_skus, report)
+            self._deactivate_unsellable(unsellable_skus, report)
         return report
 
-    def _deactivate_missing(self, live_skus: set[str], report: SyncReport) -> None:
-        """Zero stock on eBay-backed products no longer offered for sale.
+    def _deactivate_unsellable(self, unsellable_skus: set[str], report: SyncReport) -> None:
+        """Zero stock on products positively seen this sweep with no published
+        offer (ended or unpublished on eBay), so they drop off the storefront.
 
-        Anything previously synced whose SKU wasn't kept live this sweep —
-        ended, deleted, or its offer unpublished — would otherwise stay
-        buyable on the storefront.
+        Scoped to SKUs we *observed* as unsellable — never to "everything not
+        seen" — so an empty or partial feed, a paging gap, or a category-mapping
+        change cannot mass-deactivate the catalog. SKUs absent from the feed
+        entirely are left alone (an admin can zero those by hand).
         """
-        stale = (
-            Product.objects
-            .filter(ebay_listing_id__isnull=False, stock__gt=0)
-            .exclude(ebay_listing_id__in=list(live_skus))
+        if not unsellable_skus:
+            return
+        stale = Product.objects.filter(
+            ebay_listing_id__in=list(unsellable_skus), stock__gt=0,
         )
         report.deactivated = stale.update(stock=0)
 
@@ -123,32 +121,33 @@ class SyncService:
         mapping_lookup: dict[str, EbayCategoryMapping],
         allowlist: set[str],
         report: SyncReport,
-    ) -> bool:
-        """Upsert one item. Returns True when it was kept live (created or
-        updated), False when skipped."""
+        unsellable_skus: set[str],
+    ) -> None:
         sku = item['sku']
         offers = self.client.get_offers_for_sku(sku)
         offer = self._pick_published_offer(offers)
         if offer is None:
+            # In inventory but no live offer → ended/unpublished. Record it so
+            # any product we previously created for it gets deactivated.
+            unsellable_skus.add(sku)
             self._skip(report, sku, 'no published offer')
-            return False
+            return
 
         store_category_keys = offer.get('storeCategoryNames') or []
         mapping = self._match_mapping(store_category_keys, mapping_lookup)
         if mapping is None and not (allowlist and any(k in allowlist for k in store_category_keys)):
             self._skip(report, sku, f'unmapped store category ({store_category_keys or "none"})')
-            return False
+            return
 
         if self.dry_run:
             created = not Product.objects.filter(ebay_listing_id=sku).exists()
             self._tally_upsert(report, created)
-            return True
+            return
 
         with transaction.atomic():
             product, created = self._upsert_product(item, offer, mapping)
             self._upsert_listing(sku, product, offer, store_category_keys)
         self._tally_upsert(report, created)
-        return True
 
     @staticmethod
     def _tally_upsert(report: SyncReport, created: bool) -> None:
@@ -336,7 +335,7 @@ class SyncService:
         slug = candidate
         n = 2
         while Product.objects.filter(slug=slug).exists():
-            slug = f'{candidate[:250]}-{n}'
+            slug = f'{candidate[:248]}-{n}'[:255]
             n += 1
         return slug
 

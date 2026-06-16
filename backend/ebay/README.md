@@ -28,11 +28,12 @@ eBay Sell Inventory API ──► EbayClient ──► SyncService ──► sto
 Only **published** offers are mirrored. A SKU with no published offer, or an
 unmapped store category, is recorded as `skipped`.
 
-At the end of a full sweep the sync **reconciles**: any eBay-backed `Product`
-whose SKU wasn't kept live this run — ended, deleted on eBay, or its offer
-unpublished — has its `stock` set to 0 so it drops off the storefront. Items
-that errored mid-sweep are left untouched (a transient failure must not zero a
-live product), and a dry run never deactivates.
+At the end of a sweep the sync **deactivates** products it positively saw as
+no-longer-for-sale: a SKU still in the inventory feed but with no published
+offer (ended or unpublished) has its `stock` set to 0 so it drops off the
+storefront. To stay safe against feed gaps, SKUs that vanish from the inventory
+feed entirely — and items that errored mid-sweep — are left untouched (an admin
+can zero those by hand); a dry run never deactivates.
 
 ## Environment variables
 
