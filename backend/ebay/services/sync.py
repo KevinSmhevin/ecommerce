@@ -39,6 +39,7 @@ class SyncReport:
     updated: int = 0
     skipped: int = 0
     errors: int = 0
+    deactivated: int = 0
     error_details: list[str] = field(default_factory=list)
 
     @property
@@ -52,6 +53,7 @@ class SyncReport:
             f'  updated: {self.updated}',
             f'  skipped: {self.skipped}',
             f'  errors:  {self.errors}',
+            f'  deactivated: {self.deactivated}',
         ]
         if self.error_details:
             lines.append('Errors:')
@@ -75,6 +77,7 @@ class SyncService:
         report = SyncReport()
         mapping_lookup = self._load_category_mappings()
         allowlist = set(getattr(settings, 'EBAY_STORE_CATEGORY_IDS', []) or [])
+        live_skus: set[str] = set()
 
         for item in self.client.iter_inventory_items():
             sku = item.get('sku')
@@ -83,14 +86,34 @@ class SyncService:
                 continue
 
             try:
-                self._sync_one(item, mapping_lookup, allowlist, report)
+                if self._sync_one(item, mapping_lookup, allowlist, report):
+                    live_skus.add(sku)
             except Exception as exc:  # noqa: BLE001 — per-item isolation
                 logger.exception('sync_ebay failed for sku=%s', sku)
                 report.errors += 1
                 report.error_details.append(f'{sku}: {exc}')
+                # Keep the product live: a transient error this sweep must not
+                # masquerade as "removed from eBay" and zero its stock.
+                live_skus.add(sku)
                 self._record_error(sku, exc)
 
+        if not self.dry_run:
+            self._deactivate_missing(live_skus, report)
         return report
+
+    def _deactivate_missing(self, live_skus: set[str], report: SyncReport) -> None:
+        """Zero stock on eBay-backed products no longer offered for sale.
+
+        Anything previously synced whose SKU wasn't kept live this sweep —
+        ended, deleted, or its offer unpublished — would otherwise stay
+        buyable on the storefront.
+        """
+        stale = (
+            Product.objects
+            .filter(ebay_listing_id__isnull=False, stock__gt=0)
+            .exclude(ebay_listing_id__in=list(live_skus))
+        )
+        report.deactivated = stale.update(stock=0)
 
     # -- Per-item ---------------------------------------------------------
 
@@ -100,29 +123,32 @@ class SyncService:
         mapping_lookup: dict[str, EbayCategoryMapping],
         allowlist: set[str],
         report: SyncReport,
-    ) -> None:
+    ) -> bool:
+        """Upsert one item. Returns True when it was kept live (created or
+        updated), False when skipped."""
         sku = item['sku']
         offers = self.client.get_offers_for_sku(sku)
         offer = self._pick_published_offer(offers)
         if offer is None:
             self._skip(report, sku, 'no published offer')
-            return
+            return False
 
         store_category_keys = offer.get('storeCategoryNames') or []
         mapping = self._match_mapping(store_category_keys, mapping_lookup)
         if mapping is None and not (allowlist and any(k in allowlist for k in store_category_keys)):
             self._skip(report, sku, f'unmapped store category ({store_category_keys or "none"})')
-            return
+            return False
 
         if self.dry_run:
             created = not Product.objects.filter(ebay_listing_id=sku).exists()
             self._tally_upsert(report, created)
-            return
+            return True
 
         with transaction.atomic():
             product, created = self._upsert_product(item, offer, mapping)
             self._upsert_listing(sku, product, offer, store_category_keys)
         self._tally_upsert(report, created)
+        return True
 
     @staticmethod
     def _tally_upsert(report: SyncReport, created: bool) -> None:
@@ -153,7 +179,7 @@ class SyncService:
             or ''
         )
         price = self._extract_price(offer)
-        stock = self._extract_quantity(item)
+        quantity = self._extract_quantity(item)
 
         existing = Product.objects.filter(ebay_listing_id=sku).first()
         if existing:
@@ -161,39 +187,17 @@ class SyncService:
             existing.brand = brand
             existing.description = description
             existing.price = price
-            existing.stock = stock
+            # A missing quantity means "eBay didn't say", not "zero" — leave
+            # the stored stock alone rather than hiding a live product.
+            if quantity is not None:
+                existing.stock = quantity
             if mapping is not None:
                 existing.category = mapping.pokebin_category
             existing.save()
             return existing, False
 
-        if mapping is None:
-            # Allowlisted-but-unmapped items still need a category to satisfy
-            # the FK; use the first existing category as a last resort. The
-            # admin can re-categorise after the fact.
-            from store.models import Category
-            fallback = Category.objects.first()
-            if fallback is None:
-                raise EbayApiError(
-                    f'sku={sku} has no category mapping and no fallback Category exists.'
-                )
-            category = fallback
-        else:
-            category = mapping.pokebin_category
-
-        image_urls = product_payload.get('imageUrls') or []
-        image_files = [
-            self._download_image(url, sku, idx)
-            for idx, url in enumerate(image_urls[:4])
-        ]
-        # Pad to 4 slots so we can splat into the kwargs.
-        while len(image_files) < 4:
-            image_files.append(None)
-        if image_files[0] is None:
-            raise EbayApiError(
-                f'sku={sku} has no usable image URL; eBay returned {image_urls!r}.'
-            )
-
+        category = self._resolve_category(mapping, sku)
+        images = self._collect_images(product_payload, sku)
         product = Product.objects.create(
             category=category,
             title=title,
@@ -201,14 +205,44 @@ class SyncService:
             description=description,
             slug=self._make_slug(title, sku),
             price=price,
-            image=image_files[0],
-            image2=image_files[1],
-            image3=image_files[2],
-            image4=image_files[3],
-            stock=stock,
+            image=images[0],
+            image2=images[1],
+            image3=images[2],
+            image4=images[3],
+            stock=quantity if quantity is not None else 0,
             ebay_listing_id=sku,
         )
         return product, True
+
+    def _resolve_category(self, mapping: Optional[EbayCategoryMapping], sku: str):
+        if mapping is not None:
+            return mapping.pokebin_category
+        from store.models import Category
+        slug = getattr(settings, 'EBAY_FALLBACK_CATEGORY_SLUG', '') or ''
+        if not slug:
+            raise EbayApiError(
+                f'sku={sku}: matched only via the allowlist but '
+                'EBAY_FALLBACK_CATEGORY_SLUG is unset.'
+            )
+        fallback = Category.objects.filter(slug=slug).first()
+        if fallback is None:
+            raise EbayApiError(
+                f'sku={sku}: EBAY_FALLBACK_CATEGORY_SLUG="{slug}" matches no Category.'
+            )
+        return fallback
+
+    def _collect_images(self, product_payload: dict, sku: str) -> list:
+        image_urls = product_payload.get('imageUrls') or []
+        downloaded = [
+            self._download_image(url, sku, idx)
+            for idx, url in enumerate(image_urls[:4])
+        ]
+        usable = [image for image in downloaded if image is not None]
+        if not usable:
+            raise EbayApiError(
+                f'sku={sku} has no usable image URL; eBay returned {image_urls!r}.'
+            )
+        return (usable + [None, None, None, None])[:4]
 
     # -- EbayListing audit -----------------------------------------------
 
@@ -284,19 +318,27 @@ class SyncService:
             raise EbayApiError(f'offer missing pricingSummary.price.value: {exc}') from exc
 
     @staticmethod
-    def _extract_quantity(item: dict) -> int:
+    def _extract_quantity(item: dict) -> Optional[int]:
+        """Quantity from the item, or None when eBay omits it entirely."""
         try:
             return int(item['availability']['shipToLocationAvailability']['quantity'])
         except (KeyError, TypeError, ValueError):
-            return 0
+            return None
+
+    def _make_slug(self, title: str, sku: str) -> str:
+        base = slugify(title) or 'ebay-item'
+        suffix = slugify(sku)[-8:] if sku else ''
+        candidate = (f'{base}-{suffix}' if suffix else base)[:255]
+        return self._unique_slug(candidate)
 
     @staticmethod
-    def _make_slug(title: str, sku: str) -> str:
-        base = slugify(title) or 'ebay-item'
-        # SKU disambiguates collisions without an extra DB roundtrip.
-        suffix = slugify(sku)[-8:] if sku else ''
-        candidate = f'{base}-{suffix}' if suffix else base
-        return candidate[:255]
+    def _unique_slug(candidate: str) -> str:
+        slug = candidate
+        n = 2
+        while Product.objects.filter(slug=slug).exists():
+            slug = f'{candidate[:250]}-{n}'
+            n += 1
+        return slug
 
     @staticmethod
     def _download_image(url: str, sku: str, index: int) -> Optional[ContentFile]:

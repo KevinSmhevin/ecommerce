@@ -28,6 +28,12 @@ eBay Sell Inventory API ──► EbayClient ──► SyncService ──► sto
 Only **published** offers are mirrored. A SKU with no published offer, or an
 unmapped store category, is recorded as `skipped`.
 
+At the end of a full sweep the sync **reconciles**: any eBay-backed `Product`
+whose SKU wasn't kept live this run — ended, deleted on eBay, or its offer
+unpublished — has its `stock` set to 0 so it drops off the storefront. Items
+that errored mid-sweep are left untouched (a transient failure must not zero a
+live product), and a dry run never deactivates.
+
 ## Environment variables
 
 Set in `backend/.env` locally, or the Render dashboard in production. The
@@ -41,7 +47,8 @@ production keys with `production`.
 | `EBAY_CERT_ID` | yes | Cert ID (Client Secret) |
 | `EBAY_DEV_ID` | yes | Dev ID |
 | `EBAY_RU_NAME` | yes | RuName (OAuth redirect identifier); env-specific |
-| `EBAY_STORE_CATEGORY_IDS` | no | Comma-separated allowlist; backstop when no mappings exist yet |
+| `EBAY_STORE_CATEGORY_IDS` | no | Allowlist of store-category **path names** (e.g. `/Pokemon/Cards`), not numeric IDs; backstop when no mappings exist yet |
+| `EBAY_FALLBACK_CATEGORY_SLUG` | if allowlist used | Category slug allowlisted-but-unmapped items are filed under; without it they error instead of landing in an arbitrary category |
 
 Get the keys and RuName from the [eBay developer console](https://developer.ebay.com/).
 The refresh token is **not** an env var — it lives in the database
@@ -69,7 +76,9 @@ code expires ~5 minutes after consent, so don't dawdle.
 
 Admin → **Ebay → eBay category mappings** → add a row per eBay store category
 you want mirrored, pointing at a Pokebin `Category`, `active=True`. Only
-mapped (or allowlisted) categories sync.
+mapped (or allowlisted) categories sync. The "eBay store category id" field
+must hold the store-category **path name** as eBay returns it in
+`storeCategoryNames` (e.g. `/Pokemon/Cards`), not a numeric ID.
 
 ### 3. Sync
 

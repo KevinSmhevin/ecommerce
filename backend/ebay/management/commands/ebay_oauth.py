@@ -11,7 +11,7 @@ Usage:
 """
 
 import datetime as dt
-from urllib.parse import parse_qsl, unquote, urlparse
+from urllib.parse import unquote, urlparse
 
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
@@ -29,9 +29,11 @@ def extract_auth_code(raw: str) -> str:
     raw = raw.strip()
     if 'code=' in raw:
         query = urlparse(raw).query or raw
-        code = dict(parse_qsl(query)).get('code')
-        if code:
-            return code
+        # Slice the raw substring rather than parse_qsl: parse_qsl decodes with
+        # unquote_plus, turning a literal '+' in the base64-ish code into a space.
+        for part in query.split('&'):
+            if part.startswith('code='):
+                return unquote(part[len('code='):])
     return unquote(raw)
 
 

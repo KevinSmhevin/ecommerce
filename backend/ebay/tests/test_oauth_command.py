@@ -31,3 +31,10 @@ class ExtractAuthCodeTests(TestCase):
 
     def test_query_string_without_scheme_yields_decoded_code(self):
         self.assertEqual(extract_auth_code(f'code={ENCODED}&expires_in=299'), DECODED)
+
+    def test_literal_plus_in_redirect_url_is_preserved(self):
+        url = 'https://x/cb?code=v%5E1.1%23a+b%23end&expires_in=299'
+        self.assertEqual(extract_auth_code(url), 'v^1.1#a+b#end')
+
+    def test_literal_plus_in_bare_code_is_unchanged(self):
+        self.assertEqual(extract_auth_code('v^1.1#a+b#end'), 'v^1.1#a+b#end')

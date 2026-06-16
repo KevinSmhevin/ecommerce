@@ -1,4 +1,5 @@
 from django.contrib import admin, messages
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect
 from django.urls import path, reverse
 
@@ -62,6 +63,8 @@ class EbayListingAdmin(admin.ModelAdmin):
         redirect = HttpResponseRedirect(reverse('admin:ebay_ebaylisting_changelist'))
         if request.method != 'POST':
             return redirect
+        if not self.has_change_permission(request):
+            raise PermissionDenied
         try:
             report = SyncService().sync_all()
         except (EbayAuthError, EbayApiError) as exc:
@@ -73,7 +76,8 @@ class EbayListingAdmin(admin.ModelAdmin):
             request,
             level,
             f'eBay sync done — created={report.created}, updated={report.updated}, '
-            f'skipped={report.skipped}, errors={report.errors}.',
+            f'skipped={report.skipped}, deactivated={report.deactivated}, '
+            f'errors={report.errors}.',
         )
         for detail in report.error_details[:5]:
             messages.error(request, detail)

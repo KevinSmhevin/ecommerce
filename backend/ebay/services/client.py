@@ -69,6 +69,11 @@ class EbayClient:
         self.app_id = settings.EBAY_APP_ID
         self.cert_id = settings.EBAY_CERT_ID
         self.ru_name = settings.EBAY_RU_NAME
+        # One pooled connection reused across every inventory page and per-SKU
+        # offer call (all hit the same host) instead of a fresh TLS handshake.
+        self._session = requests.Session()
+        self._access_token: Optional[str] = None
+        self._access_token_expires_at: Optional[dt.datetime] = None
 
     # -- OAuth: authorization code grant ---------------------------------
 
@@ -112,9 +117,14 @@ class EbayClient:
     def ensure_access_token(self) -> str:
         """Return a valid access token, refreshing if needed.
 
-        Reads/writes the `EbayAuthToken` singleton. Raises `EbayAuthError`
+        Caches the token on the instance so a multi-call sweep doesn't re-read
+        the `EbayAuthToken` singleton on every request. Raises `EbayAuthError`
         if no refresh token has been minted yet (run `manage.py ebay_oauth`).
         """
+        now = timezone.now()
+        if self._cached_token_valid(now):
+            return self._access_token
+
         from ebay.models import EbayAuthToken
 
         token = EbayAuthToken.objects.first()
@@ -123,22 +133,34 @@ class EbayClient:
                 'No eBay refresh token on file. Run `python manage.py ebay_oauth` first.'
             )
 
-        now = timezone.now()
         cached_expiry = token.access_token_expires_at
         if (
             token.access_token
             and cached_expiry
             and cached_expiry - self._ACCESS_TOKEN_REFRESH_LEEWAY > now
         ):
-            return token.access_token
+            return self._cache_access_token(token.access_token, cached_expiry)
 
         payload = self.refresh_access_token(token.refresh_token)
+        expires_at = now + dt.timedelta(seconds=int(payload['expires_in']))
         token.access_token = payload['access_token']
-        token.access_token_expires_at = now + dt.timedelta(seconds=int(payload['expires_in']))
+        token.access_token_expires_at = expires_at
         if 'scope' in payload:
             token.scope = payload['scope']
         token.save(update_fields=['access_token', 'access_token_expires_at', 'scope', 'updated_at'])
-        return token.access_token
+        return self._cache_access_token(payload['access_token'], expires_at)
+
+    def _cached_token_valid(self, now: dt.datetime) -> bool:
+        return bool(
+            self._access_token
+            and self._access_token_expires_at
+            and self._access_token_expires_at - self._ACCESS_TOKEN_REFRESH_LEEWAY > now
+        )
+
+    def _cache_access_token(self, token: str, expires_at: dt.datetime) -> str:
+        self._access_token = token
+        self._access_token_expires_at = expires_at
+        return token
 
     # -- Sell Inventory API ---------------------------------------------
 
@@ -182,7 +204,7 @@ class EbayClient:
     def _get(self, path: str, params: Optional[dict] = None) -> dict:
         """Authenticated GET against the eBay REST host."""
         token = self.ensure_access_token()
-        resp = requests.get(
+        resp = self._session.get(
             f'{self.hosts.api}{path}',
             headers={
                 'Authorization': f'Bearer {token}',

@@ -138,8 +138,11 @@ class SyncServiceTests(TestCase):
         listing = EbayListing.objects.get(ebay_item_id='SKU-Plush')
         self.assertEqual(listing.sync_state, 'skipped')
 
-    @override_settings(EBAY_STORE_CATEGORY_IDS=['/Pokemon/Plushies'])
-    def test_allowlist_acts_as_mapping_fallback(self):
+    @override_settings(
+        EBAY_STORE_CATEGORY_IDS=['/Pokemon/Plushies'],
+        EBAY_FALLBACK_CATEGORY_SLUG='cards',
+    )
+    def test_allowlist_uses_configured_fallback_category(self):
         client = _FakeClient(
             items=[_inventory_item(sku='SKU-Plush')],
             offers_by_sku={'SKU-Plush': [_offer(sku='SKU-Plush', store_category='/Pokemon/Plushies')]},
@@ -147,9 +150,24 @@ class SyncServiceTests(TestCase):
         with _patch_image_download():
             report = SyncService(client=client).sync_all()
 
-        # Allowlist hit → product created using the fallback Category.
         self.assertEqual((report.created, report.skipped), (1, 0))
-        self.assertTrue(Product.objects.filter(ebay_listing_id='SKU-Plush').exists())
+        product = Product.objects.get(ebay_listing_id='SKU-Plush')
+        self.assertEqual(product.category, self.cards_category)
+
+    @override_settings(
+        EBAY_STORE_CATEGORY_IDS=['/Pokemon/Plushies'],
+        EBAY_FALLBACK_CATEGORY_SLUG='',
+    )
+    def test_allowlist_without_configured_fallback_errors(self):
+        client = _FakeClient(
+            items=[_inventory_item(sku='SKU-Plush')],
+            offers_by_sku={'SKU-Plush': [_offer(sku='SKU-Plush', store_category='/Pokemon/Plushies')]},
+        )
+        with _patch_image_download():
+            report = SyncService(client=client).sync_all()
+
+        self.assertEqual(report.errors, 1)
+        self.assertFalse(Product.objects.filter(ebay_listing_id='SKU-Plush').exists())
 
     def test_skips_when_no_offer_published(self):
         client = _FakeClient(
@@ -193,3 +211,109 @@ class SyncServiceTests(TestCase):
         self.assertEqual((report.created, report.updated), (1, 0))
         self.assertFalse(Product.objects.exists())
         self.assertFalse(EbayListing.objects.exists())
+
+    def test_uses_first_successful_image_when_an_earlier_one_fails(self):
+        client = _FakeClient(
+            items=[_inventory_item(image_count=2)],
+            offers_by_sku={'SKU-1': [_offer()]},
+        )
+        ok = mock.Mock(status_code=200, content=_png_bytes())
+        bad = mock.Mock(status_code=404, content=b'')
+        with mock.patch('ebay.services.sync.requests.get', side_effect=[bad, ok]):
+            report = SyncService(client=client).sync_all()
+
+        self.assertEqual((report.created, report.errors), (1, 0))
+        self.assertTrue(Product.objects.get(ebay_listing_id='SKU-1').image)
+
+    def test_missing_quantity_does_not_zero_existing_stock(self):
+        client = _FakeClient(items=[_inventory_item(stock=4)], offers_by_sku={'SKU-1': [_offer()]})
+        with _patch_image_download():
+            SyncService(client=client).sync_all()
+
+        item = _inventory_item(stock=4)
+        del item['availability']
+        client2 = _FakeClient(items=[item], offers_by_sku={'SKU-1': [_offer()]})
+        with _patch_image_download():
+            report = SyncService(client=client2).sync_all()
+
+        self.assertEqual(report.updated, 1)
+        self.assertEqual(Product.objects.get(ebay_listing_id='SKU-1').stock, 4)
+
+    def test_missing_quantity_defaults_new_product_to_zero(self):
+        item = _inventory_item()
+        del item['availability']
+        client = _FakeClient(items=[item], offers_by_sku={'SKU-1': [_offer()]})
+        with _patch_image_download():
+            SyncService(client=client).sync_all()
+
+        self.assertEqual(Product.objects.get(ebay_listing_id='SKU-1').stock, 0)
+
+    def test_distinct_skus_with_colliding_base_slug_get_unique_slugs(self):
+        items = [
+            _inventory_item(sku='AAAAAAAA', title='Dup'),
+            _inventory_item(sku='XAAAAAAAA', title='Dup'),
+        ]
+        offers = {
+            'AAAAAAAA': [_offer(sku='AAAAAAAA')],
+            'XAAAAAAAA': [_offer(sku='XAAAAAAAA')],
+        }
+        with _patch_image_download():
+            report = SyncService(client=_FakeClient(items=items, offers_by_sku=offers)).sync_all()
+
+        self.assertEqual(report.created, 2)
+        slugs = set(Product.objects.values_list('slug', flat=True))
+        self.assertEqual(len(slugs), 2)
+
+    def _ebay_product(self, ebay_listing_id, stock):
+        return Product.objects.create(
+            category=self.cards_category,
+            title=f'Old {ebay_listing_id}',
+            slug=f'old-{ebay_listing_id.lower()}',
+            price=Decimal('1.00'),
+            image='images/old.jpg',
+            stock=stock,
+            ebay_listing_id=ebay_listing_id,
+        )
+
+    def test_deactivates_product_no_longer_in_feed(self):
+        self._ebay_product('GONE', stock=5)
+        client = _FakeClient(items=[_inventory_item()], offers_by_sku={'SKU-1': [_offer()]})
+        with _patch_image_download():
+            report = SyncService(client=client).sync_all()
+
+        self.assertEqual(report.deactivated, 1)
+        self.assertEqual(Product.objects.get(ebay_listing_id='GONE').stock, 0)
+        self.assertEqual(Product.objects.get(ebay_listing_id='SKU-1').stock, 4)
+
+    def test_deactivates_product_when_offer_becomes_unpublished(self):
+        client = _FakeClient(items=[_inventory_item(stock=4)], offers_by_sku={'SKU-1': [_offer()]})
+        with _patch_image_download():
+            SyncService(client=client).sync_all()
+
+        client2 = _FakeClient(
+            items=[_inventory_item(stock=4)],
+            offers_by_sku={'SKU-1': [_offer(status='UNPUBLISHED')]},
+        )
+        report = SyncService(client=client2).sync_all()
+
+        self.assertEqual(report.deactivated, 1)
+        self.assertEqual(Product.objects.get(ebay_listing_id='SKU-1').stock, 0)
+
+    def test_errored_item_is_not_deactivated(self):
+        self._ebay_product('SKU-1', stock=3)
+        bad_offer = _offer()
+        del bad_offer['pricingSummary']
+        client = _FakeClient(items=[_inventory_item()], offers_by_sku={'SKU-1': [bad_offer]})
+        report = SyncService(client=client).sync_all()
+
+        self.assertEqual(report.errors, 1)
+        self.assertEqual(report.deactivated, 0)
+        self.assertEqual(Product.objects.get(ebay_listing_id='SKU-1').stock, 3)
+
+    def test_dry_run_does_not_deactivate(self):
+        self._ebay_product('GONE', stock=5)
+        client = _FakeClient(items=[_inventory_item()], offers_by_sku={'SKU-1': [_offer()]})
+        report = SyncService(client=client, dry_run=True).sync_all()
+
+        self.assertEqual(report.deactivated, 0)
+        self.assertEqual(Product.objects.get(ebay_listing_id='GONE').stock, 5)

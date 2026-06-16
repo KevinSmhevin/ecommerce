@@ -72,3 +72,22 @@ class SyncNowAdminViewTests(TestCase):
 
         service_cls.return_value.sync_all.assert_not_called()
         self.assertRedirects(response, self.changelist_url, fetch_redirect_response=False)
+
+
+class SyncNowPermissionTests(TestCase):
+    def setUp(self):
+        self.url = reverse('admin:ebay_ebaylisting_sync_now')
+        staff_without_perm = get_user_model().objects.create_user(
+            username='clerk',
+            email='clerk@pokebin.app',
+            password='secret-pw',
+            is_staff=True,
+        )
+        self.client.force_login(staff_without_perm)
+
+    def test_staff_without_change_permission_cannot_run_sync(self):
+        with mock.patch('ebay.admin.SyncService') as service_cls:
+            response = self.client.post(self.url)
+
+        self.assertEqual(response.status_code, 403)
+        service_cls.return_value.sync_all.assert_not_called()

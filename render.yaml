@@ -60,7 +60,9 @@ services:
       - key: EBAY_RU_NAME
         sync: false
       - key: EBAY_STORE_CATEGORY_IDS
-        sync: false  # Optional comma-separated allowlist
+        sync: false  # Optional allowlist of store-category path names
+      - key: EBAY_FALLBACK_CATEGORY_SLUG
+        sync: false  # Required if the allowlist is used (category slug)
 
   # Frontend React Static Site
   - type: web

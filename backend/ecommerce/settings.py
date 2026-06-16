@@ -384,6 +384,13 @@ EBAY_DEV_ID = env('EBAY_DEV_ID', default='')
 EBAY_RU_NAME = env('EBAY_RU_NAME', default='')
 # Optional comma-separated allowlist used as a backstop when the
 # EbayCategoryMapping table is empty (e.g. before initial admin setup).
+# Values must be eBay store-category *path names* (as returned in the offer's
+# storeCategoryNames, e.g. "/Pokemon/Cards"), not numeric category IDs.
 EBAY_STORE_CATEGORY_IDS = [
     s.strip() for s in env('EBAY_STORE_CATEGORY_IDS', default='').split(',') if s.strip()
 ]
+
+# Category (by slug) that allowlisted-but-unmapped eBay items are filed under.
+# Required for the allowlist path; without it those items are reported as errors
+# rather than dumped into an arbitrary category.
+EBAY_FALLBACK_CATEGORY_SLUG = env('EBAY_FALLBACK_CATEGORY_SLUG', default='')
