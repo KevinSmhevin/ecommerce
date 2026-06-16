@@ -1,8 +1,8 @@
 """eBay REST client.
 
 Scope of this module: OAuth (authorization-code grant + refresh) for the
-seller's own account, plus a thin `request()` helper that future modules
-(sync pipeline, store-category lookup) will build on.
+seller's own account, plus the Sell Inventory API reads that `SyncService`
+builds on (`iter_inventory_items`, `get_offers_for_sku`).
 
 eBay's OAuth endpoints differ between sandbox and production but share the
 same path; we pick the host based on `settings.EBAY_ENV`.

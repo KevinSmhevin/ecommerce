@@ -1,9 +1,9 @@
 """One-time OAuth bootstrap for the eBay seller account.
 
-Run interactively from a developer machine. The command prints the eBay
-consent URL, waits for you to paste back the `code` query param after
-granting access, and stores the resulting refresh token in the
-`EbayAuthToken` singleton so the cron worker can use it.
+Run interactively from a developer machine (or a Render shell). The command
+prints the eBay consent URL, waits for you to paste back the `code` query
+param after granting access, and stores the resulting refresh token in the
+`EbayAuthToken` singleton so the admin "Sync now" button can use it.
 
 Usage:
     python manage.py ebay_oauth

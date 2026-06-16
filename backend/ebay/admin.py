@@ -59,22 +59,14 @@ class EbayListingAdmin(admin.ModelAdmin):
         ] + super().get_urls()
 
     def sync_now_view(self, request):
+        redirect = HttpResponseRedirect(reverse('admin:ebay_ebaylisting_changelist'))
         if request.method != 'POST':
-            return HttpResponseRedirect(
-                reverse('admin:ebay_ebaylisting_changelist')
-            )
+            return redirect
         try:
             report = SyncService().sync_all()
-        except EbayAuthError as exc:
-            messages.error(request, f'eBay auth error: {exc}')
-            return HttpResponseRedirect(
-                reverse('admin:ebay_ebaylisting_changelist')
-            )
-        except EbayApiError as exc:
-            messages.error(request, f'eBay API error: {exc}')
-            return HttpResponseRedirect(
-                reverse('admin:ebay_ebaylisting_changelist')
-            )
+        except (EbayAuthError, EbayApiError) as exc:
+            messages.error(request, f'eBay sync failed: {exc}')
+            return redirect
 
         level = messages.SUCCESS if report.errors == 0 else messages.WARNING
         messages.add_message(
@@ -85,7 +77,7 @@ class EbayListingAdmin(admin.ModelAdmin):
         )
         for detail in report.error_details[:5]:
             messages.error(request, detail)
-        return HttpResponseRedirect(reverse('admin:ebay_ebaylisting_changelist'))
+        return redirect
 
 
 @admin.register(EbayAuthToken)

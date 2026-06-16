@@ -1,6 +1,9 @@
 """Sync the seller's eBay inventory into the Pokebin catalog.
 
-Designed to run on a Render cron schedule. Safe to invoke manually:
+The CLI entry point for the sync — mainly for the large initial bulk import
+(no web-request timeout). Day-to-day syncing runs from the admin "Sync now"
+button. Same engine either way.
+
     python manage.py sync_ebay
     python manage.py sync_ebay --dry-run
 """

@@ -105,36 +105,35 @@ class SyncService:
         offers = self.client.get_offers_for_sku(sku)
         offer = self._pick_published_offer(offers)
         if offer is None:
-            report.skipped += 1
-            self._record_skip(sku, 'no published offer')
+            self._skip(report, sku, 'no published offer')
             return
 
         store_category_keys = offer.get('storeCategoryNames') or []
         mapping = self._match_mapping(store_category_keys, mapping_lookup)
         if mapping is None and not (allowlist and any(k in allowlist for k in store_category_keys)):
-            report.skipped += 1
-            self._record_skip(
-                sku,
-                f'unmapped store category ({store_category_keys or "none"})',
-            )
+            self._skip(report, sku, f'unmapped store category ({store_category_keys or "none"})')
             return
 
         if self.dry_run:
-            # Still account for it so the report is meaningful.
-            existing = Product.objects.filter(ebay_listing_id=sku).exists()
-            if existing:
-                report.updated += 1
-            else:
-                report.created += 1
+            created = not Product.objects.filter(ebay_listing_id=sku).exists()
+            self._tally_upsert(report, created)
             return
 
         with transaction.atomic():
             product, created = self._upsert_product(item, offer, mapping)
             self._upsert_listing(sku, product, offer, store_category_keys)
+        self._tally_upsert(report, created)
+
+    @staticmethod
+    def _tally_upsert(report: SyncReport, created: bool) -> None:
         if created:
             report.created += 1
         else:
             report.updated += 1
+
+    def _skip(self, report: SyncReport, sku: str, reason: str) -> None:
+        report.skipped += 1
+        self._record_skip(sku, reason)
 
     # -- Product upsert ---------------------------------------------------
 
@@ -226,7 +225,6 @@ class SyncService:
             defaults={
                 'product': product,
                 'ebay_store_category_id': primary_category,
-                'ebay_last_modified': self._parse_dt(offer.get('listingDuration')),
                 'last_synced_at': timezone.now(),
                 'sync_state': 'synced',
                 'sync_error': '',
@@ -235,26 +233,20 @@ class SyncService:
         return listing
 
     def _record_skip(self, sku: str, reason: str) -> None:
-        if self.dry_run:
-            return
-        EbayListing.objects.update_or_create(
-            ebay_item_id=sku,
-            defaults={
-                'last_synced_at': timezone.now(),
-                'sync_state': 'skipped',
-                'sync_error': reason,
-            },
-        )
+        self._record_outcome(sku, 'skipped', reason)
 
     def _record_error(self, sku: str, exc: Exception) -> None:
+        self._record_outcome(sku, 'error', str(exc))
+
+    def _record_outcome(self, sku: str, state: str, detail: str = '') -> None:
         if self.dry_run:
             return
         EbayListing.objects.update_or_create(
             ebay_item_id=sku,
             defaults={
                 'last_synced_at': timezone.now(),
-                'sync_state': 'error',
-                'sync_error': str(exc)[:1000],
+                'sync_state': state,
+                'sync_error': detail[:1000],
             },
         )
 
@@ -281,7 +273,7 @@ class SyncService:
     @staticmethod
     def _pick_published_offer(offers: list[dict]) -> Optional[dict]:
         published = [o for o in offers if (o.get('status') or '').upper() == 'PUBLISHED']
-        return (published or offers or [None])[0]
+        return published[0] if published else None
 
     @staticmethod
     def _extract_price(offer: dict):
@@ -297,18 +289,6 @@ class SyncService:
             return int(item['availability']['shipToLocationAvailability']['quantity'])
         except (KeyError, TypeError, ValueError):
             return 0
-
-    @staticmethod
-    def _parse_dt(value):
-        # eBay returns ISO 8601 timestamps; we lean on dateutil if present,
-        # otherwise return None and let the field stay null.
-        if not value:
-            return None
-        try:
-            from dateutil.parser import isoparse
-            return isoparse(value)
-        except Exception:
-            return None
 
     @staticmethod
     def _make_slug(title: str, sku: str) -> str:

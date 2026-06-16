@@ -73,6 +73,13 @@ The React app will be available at `http://localhost:5173`
 - `GET /api/products/` - List all products (supports ?category=slug&ordering=price)
 - `GET /api/products/{id}/` - Get product details
 
+## eBay Integration
+
+The catalog can be auto-populated from the seller's eBay inventory via a
+one-way sync, triggered from the Django admin "Sync now" button (no separate
+worker). Setup, env vars, and the OAuth bootstrap are documented in
+[`backend/ebay/README.md`](backend/ebay/README.md).
+
 ## Tech Stack
 
 ### Backend

@@ -160,6 +160,16 @@ class SyncServiceTests(TestCase):
         self.assertEqual((report.created, report.skipped), (0, 1))
         self.assertEqual(EbayListing.objects.get(ebay_item_id='SKU-1').sync_state, 'skipped')
 
+    def test_skips_when_only_unpublished_offer_exists(self):
+        client = _FakeClient(
+            items=[_inventory_item()],
+            offers_by_sku={'SKU-1': [_offer(status='UNPUBLISHED')]},
+        )
+        report = SyncService(client=client).sync_all()
+        self.assertEqual((report.created, report.skipped), (0, 1))
+        self.assertFalse(Product.objects.filter(ebay_listing_id='SKU-1').exists())
+        self.assertEqual(EbayListing.objects.get(ebay_item_id='SKU-1').sync_state, 'skipped')
+
     def test_image_download_failure_records_error(self):
         client = _FakeClient(
             items=[_inventory_item()],
