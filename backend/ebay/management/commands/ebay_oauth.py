@@ -11,12 +11,28 @@ Usage:
 """
 
 import datetime as dt
+from urllib.parse import parse_qsl, unquote, urlparse
 
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
 from ebay.models import EbayAuthToken
 from ebay.services import EbayAuthError, EbayClient
+
+
+def extract_auth_code(raw: str) -> str:
+    """Normalise whatever the seller pasted into a clean auth code.
+
+    eBay puts the code URL-encoded in the redirect's address bar, so accept
+    the full redirect URL, a bare encoded code, or an already-decoded code.
+    """
+    raw = raw.strip()
+    if 'code=' in raw:
+        query = urlparse(raw).query or raw
+        code = dict(parse_qsl(query)).get('code')
+        if code:
+            return code
+    return unquote(raw)
 
 
 class Command(BaseCommand):
@@ -39,15 +55,20 @@ class Command(BaseCommand):
             ' with a `code=...` query parameter.\n'
         )
 
-        code = options.get('code')
-        if not code:
+        raw_code = options.get('code')
+        if not raw_code:
+            self.stdout.write(
+                '\nPaste the `code` value — or the whole redirect URL; '
+                'either form is fine, encoding is handled for you.'
+            )
             try:
-                code = input('Paste the `code` value here: ').strip()
+                raw_code = input('code or redirect URL: ')
             except EOFError as exc:
                 raise CommandError('No code provided.') from exc
 
-        if not code:
+        if not raw_code or not raw_code.strip():
             raise CommandError('Empty auth code.')
+        code = extract_auth_code(raw_code)
 
         try:
             payload = client.exchange_code(code)

@@ -140,7 +140,66 @@ class EbayClient:
         token.save(update_fields=['access_token', 'access_token_expires_at', 'scope', 'updated_at'])
         return token.access_token
 
+    # -- Sell Inventory API ---------------------------------------------
+
+    def list_inventory_items(self, limit: int = 100, offset: int = 0) -> dict:
+        """One page of the seller's Inventory API items.
+
+        Returns the raw response dict — `inventoryItems`, `total`, `next` etc.
+        """
+        return self._get(
+            '/sell/inventory/v1/inventory_item',
+            params={'limit': limit, 'offset': offset},
+        )
+
+    def iter_inventory_items(self, page_size: int = 100):
+        """Yield every inventory item across all pages.
+
+        Pagination follows the `next` link when present, otherwise advances
+        by `offset += size` until the API stops returning items. eBay caps
+        `limit` at 200; 100 is a safe default.
+        """
+        offset = 0
+        while True:
+            page = self.list_inventory_items(limit=page_size, offset=offset)
+            items = page.get('inventoryItems') or []
+            for item in items:
+                yield item
+            # Prefer the explicit pagination signal eBay provides.
+            if not page.get('next'):
+                return
+            offset += int(page.get('size') or len(items) or page_size)
+            if not items:
+                return
+
+    def get_offers_for_sku(self, sku: str) -> list[dict]:
+        """All offers tied to a SKU. Empty list if the SKU has none."""
+        payload = self._get('/sell/inventory/v1/offer', params={'sku': sku})
+        return payload.get('offers') or []
+
     # -- Internals -------------------------------------------------------
+
+    def _get(self, path: str, params: Optional[dict] = None) -> dict:
+        """Authenticated GET against the eBay REST host."""
+        token = self.ensure_access_token()
+        resp = requests.get(
+            f'{self.hosts.api}{path}',
+            headers={
+                'Authorization': f'Bearer {token}',
+                'Accept': 'application/json',
+                # eBay requires this for marketplace-scoped endpoints.
+                'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
+            },
+            params=params or {},
+            timeout=30,
+        )
+        if resp.status_code == 204:
+            return {}
+        if resp.status_code != 200:
+            raise EbayApiError(
+                f'eBay {path} returned {resp.status_code}: {resp.text[:500]}'
+            )
+        return resp.json()
 
     def _token_request(self, data: dict) -> dict:
         if not self.app_id or not self.cert_id:
