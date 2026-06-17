@@ -6,6 +6,8 @@ Fixtures mirror eBay's real response shape: a per-listing `statusCode`, a
 top-level `listingId`, and `sku`/`offerId` nested under `inventoryItems[]`.
 """
 
+import os
+import tempfile
 from io import StringIO
 from unittest import mock
 
@@ -60,11 +62,38 @@ class EbayMigrateCommandTests(TestCase):
                 migrated('111', 'PSA-1', 'of1'),
                 failed('222', 'listing has no SKU'),
             ]
-            call_command('ebay_migrate', '111', '222', stdout=out)
+            with self.assertRaises(CommandError):
+                call_command('ebay_migrate', '111', '222', stdout=out)
 
         value = out.getvalue()
         self.assertIn('listing has no SKU', value)
         self.assertIn('Migrated 1, failed 1', value)
+
+    def test_exits_nonzero_when_a_listing_fails(self):
+        with mock.patch(COMMAND_PATH) as Client:
+            Client.return_value.bulk_migrate_listing.return_value = [failed('222', 'no sku')]
+            with self.assertRaises(CommandError):
+                call_command('ebay_migrate', '222', stdout=StringIO())
+
+    def test_full_success_does_not_raise(self):
+        with mock.patch(COMMAND_PATH) as Client:
+            Client.return_value.bulk_migrate_listing.return_value = [migrated('111', 'PSA-1', 'of1')]
+            call_command('ebay_migrate', '111', stdout=StringIO())  # no CommandError
+
+    def test_file_with_utf8_bom_is_read_without_corrupting_first_id(self):
+        with tempfile.NamedTemporaryFile(
+            'w', suffix='.txt', delete=False, encoding='utf-8-sig'
+        ) as handle:
+            handle.write('111\n222\n')  # utf-8-sig prepends a BOM
+            path = handle.name
+        try:
+            with mock.patch(COMMAND_PATH) as Client:
+                client = Client.return_value
+                client.bulk_migrate_listing.return_value = []
+                call_command('ebay_migrate', '--file', path, stdout=StringIO())
+            self.assertEqual(client.bulk_migrate_listing.call_args_list[0].args[0], ['111', '222'])
+        finally:
+            os.unlink(path)
 
     def test_batches_in_groups_of_five(self):
         ids = [str(100 + n) for n in range(7)]
@@ -97,7 +126,8 @@ class EbayMigrateCommandTests(TestCase):
                 EbayApiError('eBay /bulk_migrate_listing returned 500: boom'),
                 [migrated('105', 'PSA-9', 'of9'), migrated('106', 'PSA-10', 'of10')],
             ]
-            call_command('ebay_migrate', *ids, stdout=out)
+            with self.assertRaises(CommandError):
+                call_command('ebay_migrate', *ids, stdout=out)
 
         value = out.getvalue()
         self.assertIn('Migrated 2, failed 5', value)

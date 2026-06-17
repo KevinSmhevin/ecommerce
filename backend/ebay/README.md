@@ -101,11 +101,15 @@ per-listing ✓/✗ with the SKU/offer it created or the error it hit. A whole-b
 API error is recorded per listing and the run continues, so one bad batch never
 hides the migrations the others completed.
 
-Re-running never corrupts anything, but it isn't a clean no-op: eBay rejects
-re-migrating a listing that's already in the Inventory model, so those come back
-as `✗ … Cannot migrate listing` and count toward the **failed** tally. A
-`Migrated 0, failed N` on a second run of an already-migrated set is expected,
-not a real failure.
+The command **exits non-zero when any listing fails** (so a scripted/CI run
+surfaces the failure). Re-running never corrupts anything, but it isn't a clean
+no-op: eBay rejects re-migrating a listing that's already in the Inventory
+model, so those come back as `✗ … Cannot migrate listing` and count toward the
+**failed** tally. A `Migrated 0, failed N` (and non-zero exit) on a second run
+of an already-migrated set is expected, not a real failure.
+
+`--file` input is read as UTF-8 and tolerates a leading byte-order mark, so a
+list exported from Excel/Notepad on Windows works as-is.
 
 ### 2. Map eBay store categories → Pokebin categories
 

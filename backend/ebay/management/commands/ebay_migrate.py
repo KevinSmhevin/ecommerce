@@ -42,7 +42,11 @@ class Command(BaseCommand):
             raise CommandError('No listing IDs given. Pass them as arguments or via --file.')
 
         responses = self._migrate(listing_ids)
-        self._report(responses)
+        failed = self._report(responses)
+        if failed:
+            # Non-zero exit so a scripted/CI run (e.g. `ebay_migrate --file`)
+            # surfaces the failure instead of the report scrolling past as OK.
+            raise CommandError(f'{failed} listing(s) failed to migrate.')
 
     def _gather_listing_ids(self, options) -> list[str]:
         raw_ids = list(options['listing_ids'])
@@ -52,8 +56,10 @@ class Command(BaseCommand):
 
     @staticmethod
     def _read_ids_file(path: str) -> list[str]:
+        # utf-8-sig strips a leading BOM that Windows/Excel exports prepend —
+        # otherwise it rides along on the first ID and the migration fails.
         try:
-            with open(path, encoding='utf-8') as handle:
+            with open(path, encoding='utf-8-sig') as handle:
                 return [line.strip() for line in handle if line.strip()]
         except OSError as exc:
             raise CommandError(f'Could not read --file {path}: {exc}') from exc
@@ -93,7 +99,7 @@ class Command(BaseCommand):
             for listing_id in batch
         ]
 
-    def _report(self, responses: list[dict]) -> None:
+    def _report(self, responses: list[dict]) -> int:
         migrated = failed = 0
         for response in responses:
             if response.get('statusCode') == 200:
@@ -109,6 +115,7 @@ class Command(BaseCommand):
 
         styler = self.style.SUCCESS if failed == 0 else self.style.WARNING
         self.stdout.write(styler(f'\nMigrated {migrated}, failed {failed}.'))
+        return failed
 
     @staticmethod
     def _inventory_summary(response: dict) -> str:
