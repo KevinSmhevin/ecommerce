@@ -104,7 +104,7 @@ To set it up:
 
 1. Pick a verification token (32–80 chars, `[A-Za-z0-9_-]`).
 2. Set `EBAY_VERIFICATION_TOKEN` to it and `EBAY_DELETION_ENDPOINT` to the exact
-   public URL (e.g. `https://pokebin-api.onrender.com/ebay/account-deletion/`).
+   public URL (e.g. `https://pokebin.onrender.com/ebay/account-deletion/`).
    The URL must match the portal value **byte-for-byte** — it's hashed.
 3. In the eBay developer portal → **Alerts and Notifications**, enter the same
    endpoint URL + token and an alert email, then **Send Test Notification** /
