@@ -29,12 +29,15 @@ class EbayApiError(RuntimeError):
     """Raised when an authenticated REST call fails."""
 
 
-# Default scopes the sync worker needs. `sell.inventory.readonly` lets us
-# read the seller's inventory items; we keep it tight (no write scope) to
-# match the v1 plan of one-way sync.
+# Default scopes the integration needs. The day-to-day sync only reads, but
+# the one-time `ebay_migrate` (bulk_migrate_listing) is a write, so we request
+# the read-write `sell.inventory` scope rather than `sell.inventory.readonly`.
+# Changing this requires re-running `ebay_oauth`: a refresh can narrow scopes
+# but never broaden them, so a token minted under the old readonly scope can't
+# gain write access without fresh consent.
 DEFAULT_SCOPES = [
     'https://api.ebay.com/oauth/api_scope',
-    'https://api.ebay.com/oauth/api_scope/sell.inventory.readonly',
+    'https://api.ebay.com/oauth/api_scope/sell.inventory',
     'https://api.ebay.com/oauth/api_scope/sell.account.readonly',
 ]
 
@@ -208,6 +211,30 @@ class EbayClient:
         payload = self._get('/sell/inventory/v1/offer', params={'sku': sku})
         return payload.get('offers') or []
 
+    _BULK_MIGRATE_MAX = 5  # eBay's hard cap on listings per bulk_migrate_listing call.
+
+    def bulk_migrate_listing(self, listing_ids: list[str]) -> list[dict]:
+        """Migrate traditional (site/Trading-API) listings into the Inventory
+        model so the sync's `getInventoryItems` can see them.
+
+        Each listing must already carry a SKU. eBay caps a call at five
+        listings; callers with more should batch. Returns the per-listing
+        `responses` array (each entry has its own `statusCode`, `sku`,
+        `offerId`, and `errors`).
+        """
+        if not listing_ids:
+            return []
+        if len(listing_ids) > self._BULK_MIGRATE_MAX:
+            raise ValueError(
+                f'bulk_migrate_listing accepts at most {self._BULK_MIGRATE_MAX} '
+                'listing IDs per call.'
+            )
+        payload = self._post(
+            '/sell/inventory/v1/bulk_migrate_listing',
+            {'requests': [{'listingId': listing_id} for listing_id in listing_ids]},
+        )
+        return payload.get('responses') or []
+
     # -- Internals -------------------------------------------------------
 
     def _get(self, path: str, params: Optional[dict] = None) -> dict:
@@ -222,6 +249,33 @@ class EbayClient:
                 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
             },
             params=params or {},
+            timeout=30,
+        )
+        if resp.status_code == 204:
+            return {}
+        if resp.status_code != 200:
+            raise EbayApiError(
+                f'eBay {path} returned {resp.status_code}: {resp.text[:500]}'
+            )
+        return resp.json()
+
+    def _post(self, path: str, json_body: dict) -> dict:
+        """Authenticated JSON POST against the eBay REST host.
+
+        Bulk endpoints answer 200 with a per-item `responses` array (each item
+        carrying its own status), so a transport-level failure is anything that
+        is not 200/204 — individual item errors are surfaced to the caller.
+        """
+        token = self.ensure_access_token()
+        resp = self._session.post(
+            f'{self.hosts.api}{path}',
+            headers={
+                'Authorization': f'Bearer {token}',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
+            },
+            json=json_body,
             timeout=30,
         )
         if resp.status_code == 204:

@@ -75,6 +75,31 @@ Open the printed consent URL, approve, then paste back **either** the whole
 redirect URL **or** the `code` value — URL-encoding is handled for you. The
 code expires ~5 minutes after consent, so don't dawdle.
 
+The requested scopes include the read-write `sell.inventory` scope (needed by
+the one-time migration below). If you previously authorised under the old
+read-only scope, **re-run `ebay_oauth`** — a refresh token can narrow scopes
+but never broaden them, so the write access only arrives via fresh consent.
+
+### 1b. Migrate traditional listings into the Inventory model (one-time)
+
+`getInventoryItems` — the API the sync reads — only returns listings created
+through the **Inventory API**. Listings created on the eBay site or via the
+Trading API are invisible to it (a sync over them reports `Processed: 0`).
+eBay's `bulkMigrateListing` converts eligible **active, SKU-bearing** listings
+into inventory-item + offer records so the sync can see them. Each listing
+**must already have a SKU** (eBay "custom label") — set those in Seller Hub
+first; the migration skips SKU-less listings.
+
+```bash
+python manage.py ebay_migrate 110123456789 110987654321
+python manage.py ebay_migrate --file listing_ids.txt   # one ID per line
+```
+
+Listing IDs are the item numbers shown on each Seller Hub listing. The command
+batches in groups of five (eBay's per-call cap), de-dupes, and prints a
+per-listing ✓/✗ with the SKU/offer it created or the error it hit. It's safe to
+re-run — already-migrated listings just report back without harm.
+
 ### 2. Map eBay store categories → Pokebin categories
 
 Admin → **Ebay → eBay category mappings** → add a row per eBay store category
@@ -133,6 +158,9 @@ python manage.py test ebay
 ```
 
 Covers the sync engine (`test_sync.py`), the admin "Sync now" view
-(`test_admin.py`), and auth-code normalisation (`test_oauth_command.py`).
-`SyncService` is decoupled from HTTP, so the suite runs offline against a
-fake client.
+(`test_admin.py`), auth-code normalisation (`test_oauth_command.py`), the
+client's token caching + `bulk_migrate_listing` (`test_client.py`), the
+`ebay_migrate` command (`test_migrate_command.py`), the account-deletion
+endpoint (`test_account_deletion.py`), and signature verification
+(`test_signature.py`). `SyncService` and the client are decoupled from HTTP,
+so the suite runs offline against fakes/mocks.
