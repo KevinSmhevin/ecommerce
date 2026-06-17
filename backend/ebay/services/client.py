@@ -239,11 +239,19 @@ class EbayClient:
                 f'bulk_migrate_listing accepts at most {self._BULK_MIGRATE_MAX} '
                 'listing IDs per call.'
             )
+        # eBay answers 200 (all migrated) or 207 (mixed), but also 400 at the
+        # call level when *every* listing fails — and that 400 still nests the
+        # per-item errors under `responses`. Accept it and read those errors;
+        # only a 400 with no `responses` body is a genuine bad request.
         payload = self._post(
             '/sell/inventory/v1/bulk_migrate_listing',
             {'requests': [{'listingId': listing_id} for listing_id in listing_ids]},
+            ok_statuses=(200, 207, 400),
         )
-        return payload.get('responses') or []
+        responses = payload.get('responses')
+        if responses is None:
+            raise EbayApiError(f'bulk_migrate_listing returned no responses: {payload}')
+        return responses
 
     # -- Internals -------------------------------------------------------
 
@@ -251,15 +259,19 @@ class EbayClient:
         """Authenticated GET against the eBay REST host."""
         return self._request('GET', path, params=params)
 
-    def _post(self, path: str, json_body: dict) -> dict:
+    def _post(
+        self, path: str, json_body: dict, ok_statuses: tuple[int, ...] = (200, 207),
+    ) -> dict:
         """Authenticated JSON POST against the eBay REST host.
 
         Bulk endpoints answer 200 when every item succeeds and **207
         Multi-Status** on mixed results, each item carrying its own status in
-        the body — so both are success here, and per-item failures are left for
-        the caller to read. Anything else is a transport-level failure.
+        the body. Callers whose endpoint also folds per-item errors into a
+        non-2xx envelope (e.g. bulk_migrate_listing's 400-when-all-fail) widen
+        `ok_statuses` to read that body; anything outside the set is a
+        transport-level failure.
         """
-        return self._request('POST', path, json_body=json_body, ok_statuses=(200, 207))
+        return self._request('POST', path, json_body=json_body, ok_statuses=ok_statuses)
 
     def _request(
         self,
@@ -297,7 +309,13 @@ class EbayClient:
             raise EbayApiError(
                 f'eBay {path} returned {resp.status_code}: {resp.text[:500]}'
             )
-        return resp.json()
+        try:
+            return resp.json()
+        except ValueError as exc:
+            raise EbayApiError(
+                f'eBay {path} returned {resp.status_code} with a non-JSON body: '
+                f'{resp.text[:500]}'
+            ) from exc
 
     def _token_request(self, data: dict) -> dict:
         if not self.app_id or not self.cert_id:
