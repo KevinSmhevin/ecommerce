@@ -108,12 +108,17 @@ class EbayClient:
         })
 
     def refresh_access_token(self, refresh_token: str, scopes: Optional[list[str]] = None) -> dict:
-        """Mint a new access token from a long-lived refresh token."""
-        return self._token_request({
-            'grant_type': 'refresh_token',
-            'refresh_token': refresh_token,
-            'scope': ' '.join(scopes or DEFAULT_SCOPES),
-        })
+        """Mint a new access token from a long-lived refresh token.
+
+        Only sends `scope` when the caller supplies one. A refresh can narrow
+        scopes but never broaden them, so requesting more than the refresh
+        token was granted makes eBay reject the call — omitting `scope`
+        returns a token with exactly the originally-granted scopes.
+        """
+        data = {'grant_type': 'refresh_token', 'refresh_token': refresh_token}
+        if scopes:
+            data['scope'] = ' '.join(scopes)
+        return self._token_request(data)
 
     def get_application_token(self) -> str:
         """App-level token (client-credentials grant) for app-scoped calls
@@ -153,7 +158,11 @@ class EbayClient:
         ):
             return self._cache_access_token(token.access_token, cached_expiry)
 
-        payload = self.refresh_access_token(token.refresh_token)
+        # Refresh under the scopes this token was actually granted, not the
+        # current DEFAULT_SCOPES — those may be broader (e.g. write access added
+        # for `ebay_migrate`), and a refresh that tries to broaden scope fails.
+        granted_scopes = token.scope.split() if token.scope else None
+        payload = self.refresh_access_token(token.refresh_token, granted_scopes)
         expires_at = now + dt.timedelta(seconds=int(payload['expires_in']))
         token.access_token = payload['access_token']
         token.access_token_expires_at = expires_at
@@ -219,8 +228,9 @@ class EbayClient:
 
         Each listing must already carry a SKU. eBay caps a call at five
         listings; callers with more should batch. Returns the per-listing
-        `responses` array (each entry has its own `statusCode`, `sku`,
-        `offerId`, and `errors`).
+        `responses` array — each entry has its own `statusCode` (200 on
+        success), top-level `listingId`, and `inventoryItems[]` (the `sku` and,
+        on success, `offerId` are nested there), plus `errors` on failure.
         """
         if not listing_ids:
             return []
@@ -239,48 +249,51 @@ class EbayClient:
 
     def _get(self, path: str, params: Optional[dict] = None) -> dict:
         """Authenticated GET against the eBay REST host."""
-        token = self.ensure_access_token()
-        resp = self._session.get(
-            f'{self.hosts.api}{path}',
-            headers={
-                'Authorization': f'Bearer {token}',
-                'Accept': 'application/json',
-                # eBay requires this for marketplace-scoped endpoints.
-                'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
-            },
-            params=params or {},
-            timeout=30,
-        )
-        if resp.status_code == 204:
-            return {}
-        if resp.status_code != 200:
-            raise EbayApiError(
-                f'eBay {path} returned {resp.status_code}: {resp.text[:500]}'
-            )
-        return resp.json()
+        return self._request('GET', path, params=params)
 
     def _post(self, path: str, json_body: dict) -> dict:
         """Authenticated JSON POST against the eBay REST host.
 
-        Bulk endpoints answer 200 with a per-item `responses` array (each item
-        carrying its own status), so a transport-level failure is anything that
-        is not 200/204 — individual item errors are surfaced to the caller.
+        Bulk endpoints answer 200 when every item succeeds and **207
+        Multi-Status** on mixed results, each item carrying its own status in
+        the body — so both are success here, and per-item failures are left for
+        the caller to read. Anything else is a transport-level failure.
         """
+        return self._request('POST', path, json_body=json_body, ok_statuses=(200, 207))
+
+    def _request(
+        self,
+        method: str,
+        path: str,
+        *,
+        params: Optional[dict] = None,
+        json_body: Optional[dict] = None,
+        ok_statuses: tuple[int, ...] = (200,),
+    ) -> dict:
         token = self.ensure_access_token()
-        resp = self._session.post(
+        headers = {
+            'Authorization': f'Bearer {token}',
+            'Accept': 'application/json',
+            # eBay requires this for marketplace-scoped endpoints.
+            'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
+        }
+        if json_body is not None:
+            headers['Content-Type'] = 'application/json'
+        resp = self._session.request(
+            method,
             f'{self.hosts.api}{path}',
-            headers={
-                'Authorization': f'Bearer {token}',
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
-            },
+            headers=headers,
+            params=params or {},
             json=json_body,
             timeout=30,
         )
+        return self._handle_response(resp, path, ok_statuses)
+
+    @staticmethod
+    def _handle_response(resp, path: str, ok_statuses: tuple[int, ...]) -> dict:
         if resp.status_code == 204:
             return {}
-        if resp.status_code != 200:
+        if resp.status_code not in ok_statuses:
             raise EbayApiError(
                 f'eBay {path} returned {resp.status_code}: {resp.text[:500]}'
             )

@@ -75,9 +75,23 @@ class Command(BaseCommand):
         for batch in chunked(listing_ids, BATCH_SIZE):
             try:
                 responses.extend(client.bulk_migrate_listing(batch))
-            except (EbayAuthError, EbayApiError) as exc:
+            except EbayAuthError as exc:
+                # Auth is global: every remaining batch would fail identically,
+                # so stop rather than spam the same error per batch.
                 raise CommandError(str(exc)) from exc
+            except EbayApiError as exc:
+                # A whole-batch transport error (eBay 400/500). Record each
+                # listing as failed and keep going so migrations completed by
+                # other batches are still reported instead of being discarded.
+                responses.extend(self._batch_failures(batch, exc))
         return responses
+
+    @staticmethod
+    def _batch_failures(batch: list[str], exc: Exception) -> list[dict]:
+        return [
+            {'statusCode': 0, 'listingId': listing_id, 'errors': [{'message': str(exc)}]}
+            for listing_id in batch
+        ]
 
     def _report(self, responses: list[dict]) -> None:
         migrated = failed = 0
@@ -85,8 +99,7 @@ class Command(BaseCommand):
             if response.get('statusCode') == 200:
                 migrated += 1
                 self.stdout.write(self.style.SUCCESS(
-                    f"✓ {response.get('listingId', '?')} → "
-                    f"sku={response.get('sku', '')} offer={response.get('offerId', '')}"
+                    f"✓ {response.get('listingId', '?')} → {self._inventory_summary(response)}"
                 ))
             else:
                 failed += 1
@@ -96,6 +109,15 @@ class Command(BaseCommand):
 
         styler = self.style.SUCCESS if failed == 0 else self.style.WARNING
         self.stdout.write(styler(f'\nMigrated {migrated}, failed {failed}.'))
+
+    @staticmethod
+    def _inventory_summary(response: dict) -> str:
+        """eBay nests the created SKU/offer under `inventoryItems[]`, not at the
+        entry root (a multi-variation listing yields several)."""
+        items = response.get('inventoryItems') or []
+        skus = ','.join(item.get('sku', '') for item in items)
+        offers = ','.join(item.get('offerId', '') for item in items if item.get('offerId'))
+        return f'sku={skus} offer={offers}'
 
     @staticmethod
     def _error_text(response: dict) -> str:

@@ -97,8 +97,15 @@ python manage.py ebay_migrate --file listing_ids.txt   # one ID per line
 
 Listing IDs are the item numbers shown on each Seller Hub listing. The command
 batches in groups of five (eBay's per-call cap), de-dupes, and prints a
-per-listing ✓/✗ with the SKU/offer it created or the error it hit. It's safe to
-re-run — already-migrated listings just report back without harm.
+per-listing ✓/✗ with the SKU/offer it created or the error it hit. A whole-batch
+API error is recorded per listing and the run continues, so one bad batch never
+hides the migrations the others completed.
+
+Re-running never corrupts anything, but it isn't a clean no-op: eBay rejects
+re-migrating a listing that's already in the Inventory model, so those come back
+as `✗ … Cannot migrate listing` and count toward the **failed** tally. A
+`Migrated 0, failed N` on a second run of an already-migrated set is expected,
+not a real failure.
 
 ### 2. Map eBay store categories → Pokebin categories
 
