@@ -157,6 +157,51 @@ class BulkMigrateListingTests(TestCase):
         self.assertEqual(responses[0]['statusCode'], 200)
         self.assertEqual(responses[1]['statusCode'], 400)
 
+    def test_400_with_per_item_responses_is_parsed_not_raised(self):
+        """When every listing fails, eBay answers the whole call with HTTP 400
+        but still nests the per-item errors in `responses` — so the call must
+        surface those rather than raising an opaque transport error."""
+        client = self._client()
+        body = {'responses': [
+            {'statusCode': 400, 'listingId': '111', 'marketplaceId': 'EBAY_US',
+             'errors': [{'errorId': 25002, 'message': 'does not have a valid business policy'}]},
+        ]}
+        with mock.patch.object(
+            client._session, 'request', return_value=self._response(400, body)
+        ):
+            responses = client.bulk_migrate_listing(['111'])
+
+        self.assertEqual(responses[0]['statusCode'], 400)
+        self.assertEqual(responses[0]['errors'][0]['errorId'], 25002)
+
+    def test_400_without_responses_body_raises(self):
+        """A 400 that carries no per-item `responses` array is a genuine
+        bad-request, not a partial result — surface it as an error."""
+        client = self._client()
+        with mock.patch.object(
+            client._session, 'request',
+            return_value=self._response(400, {'errors': [{'message': 'Invalid request'}]}),
+        ):
+            with self.assertRaises(EbayApiError):
+                client.bulk_migrate_listing(['111'])
+
+    def test_transport_error_raises(self):
+        client = self._client()
+        with mock.patch.object(
+            client._session, 'request', return_value=self._response(500, {'error': 'boom'})
+        ):
+            with self.assertRaises(EbayApiError):
+                client.bulk_migrate_listing(['111'])
+
+    def test_non_json_error_body_raises_cleanly(self):
+        client = self._client()
+        resp = mock.Mock(status_code=400)
+        resp.json.side_effect = ValueError('no json')
+        resp.text = '<html>gateway error</html>'
+        with mock.patch.object(client._session, 'request', return_value=resp):
+            with self.assertRaises(EbayApiError):
+                client.bulk_migrate_listing(['111'])
+
     def test_empty_list_makes_no_call(self):
         client = self._client()
         with mock.patch.object(client._session, 'request') as request:
@@ -167,11 +212,3 @@ class BulkMigrateListingTests(TestCase):
         client = self._client()
         with self.assertRaises(ValueError):
             client.bulk_migrate_listing([str(n) for n in range(6)])
-
-    def test_raises_on_transport_error(self):
-        client = self._client()
-        with mock.patch.object(
-            client._session, 'request', return_value=self._response(400, {'error': 'bad'})
-        ):
-            with self.assertRaises(EbayApiError):
-                client.bulk_migrate_listing(['111'])
