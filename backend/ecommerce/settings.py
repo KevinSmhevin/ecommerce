@@ -401,3 +401,9 @@ EBAY_FALLBACK_CATEGORY_SLUG = env('EBAY_FALLBACK_CATEGORY_SLUG', default='')
 # eBay folds it into the challenge hash.
 EBAY_VERIFICATION_TOKEN = env('EBAY_VERIFICATION_TOKEN', default='')
 EBAY_DELETION_ENDPOINT = env('EBAY_DELETION_ENDPOINT', default='')
+
+# When True, deletion notifications that fail x-ebay-signature verification are
+# rejected (HTTP 412) instead of acknowledged. Default False: we still ack
+# (there is no buyer PII to erase) and log the failure, so a verification hiccup
+# can't break eBay's required acknowledgement or trigger retry storms.
+EBAY_REJECT_UNVERIFIED_NOTIFICATIONS = env.bool('EBAY_REJECT_UNVERIFIED_NOTIFICATIONS', default=False)

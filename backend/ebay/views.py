@@ -14,6 +14,8 @@ from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
+from .services.signature import verify_ebay_signature
+
 logger = logging.getLogger(__name__)
 
 
@@ -49,6 +51,13 @@ def _challenge_response(request):
 
 
 def _acknowledge_deletion(request):
+    verified = verify_ebay_signature(request.headers.get('x-ebay-signature', ''), request.body)
+    if not verified:
+        logger.warning('eBay account deletion notification failed signature verification')
+        if getattr(settings, 'EBAY_REJECT_UNVERIFIED_NOTIFICATIONS', False):
+            # eBay's documented response for a signature it can't validate.
+            return HttpResponse(status=412)
+
     try:
         payload = json.loads(request.body or b'{}')
     except json.JSONDecodeError:
@@ -56,5 +65,5 @@ def _acknowledge_deletion(request):
     # Pokebin's eBay integration only reads the seller's own inventory and
     # stores no eBay buyer PII, so there is nothing to erase — but eBay still
     # requires every production app to acknowledge the notification.
-    logger.info('eBay account deletion notification received: %s', payload)
+    logger.info('eBay account deletion notification received (verified=%s): %s', verified, payload)
     return HttpResponse(status=200)

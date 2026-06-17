@@ -112,6 +112,15 @@ class EbayClient:
             'scope': ' '.join(scopes or DEFAULT_SCOPES),
         })
 
+    def get_application_token(self) -> str:
+        """App-level token (client-credentials grant) for app-scoped calls
+        like the Notification API's getPublicKey — no seller consent needed."""
+        payload = self._token_request({
+            'grant_type': 'client_credentials',
+            'scope': 'https://api.ebay.com/oauth/api_scope',
+        })
+        return payload['access_token']
+
     # -- Persistent token management -------------------------------------
 
     def ensure_access_token(self) -> str:

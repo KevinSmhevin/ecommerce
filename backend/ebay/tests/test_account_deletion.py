@@ -8,6 +8,7 @@ https://developer.ebay.com/develop/guides-v2/marketplace-user-account-deletion
 
 import hashlib
 import json
+from unittest import mock
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -42,6 +43,23 @@ class AccountDeletionEndpointTests(TestCase):
         response = self.client.post(
             self.url, data=json.dumps(payload), content_type='application/json',
         )
+        self.assertEqual(response.status_code, 200)
+
+    def test_default_mode_acks_even_when_signature_unverified(self):
+        with mock.patch('ebay.views.verify_ebay_signature', return_value=False):
+            response = self.client.post(self.url, data='{}', content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+
+    @override_settings(EBAY_REJECT_UNVERIFIED_NOTIFICATIONS=True)
+    def test_strict_mode_rejects_unverified_signature(self):
+        with mock.patch('ebay.views.verify_ebay_signature', return_value=False):
+            response = self.client.post(self.url, data='{}', content_type='application/json')
+        self.assertEqual(response.status_code, 412)
+
+    @override_settings(EBAY_REJECT_UNVERIFIED_NOTIFICATIONS=True)
+    def test_strict_mode_accepts_verified_signature(self):
+        with mock.patch('ebay.views.verify_ebay_signature', return_value=True):
+            response = self.client.post(self.url, data='{}', content_type='application/json')
         self.assertEqual(response.status_code, 200)
 
     @override_settings(EBAY_VERIFICATION_TOKEN='', EBAY_DELETION_ENDPOINT='')

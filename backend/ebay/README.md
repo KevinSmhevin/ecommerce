@@ -98,7 +98,11 @@ account-deletion/closure notification endpoint. This app exposes one at
 - **GET** `?challenge_code=…` → `200 {"challengeResponse": sha256(challengeCode + verificationToken + endpoint)}`.
 - **POST** (a real deletion event) → `200` acknowledgement. Pokebin stores no
   eBay buyer PII (it only reads the seller's own inventory), so there's nothing
-  to erase — but the endpoint must still ack.
+  to erase — but the endpoint must still ack. The POST's `x-ebay-signature` is
+  verified (ECDSA/SHA1; eBay's public key is fetched via the Notification API
+  and cached ~1h). By default a failed/absent signature is **logged but still
+  acked** (no PII to gate, and we avoid retry storms); set
+  `EBAY_REJECT_UNVERIFIED_NOTIFICATIONS=True` to reject those with HTTP 412.
 
 To set it up:
 
