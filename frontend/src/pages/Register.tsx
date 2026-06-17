@@ -58,15 +58,12 @@ const Register = () => {
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center py-12 px-4">
-        <div
-          className="w-full max-w-md bg-white border-2 border-black rounded-2xl p-8 text-center"
-          style={{ boxShadow: '6px 6px 0 #000' }}
-        >
-          <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-black text-lg">✓</span>
+        <div className="w-full max-w-md glass rounded-2xl p-8 text-center">
+          <div className="w-12 h-12 bg-emerald-500/20 border border-emerald-400/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-emerald-300 font-black text-lg">✓</span>
           </div>
-          <h2 className="text-xl font-black text-black uppercase tracking-widest mb-3">Account Created</h2>
-          <p className="text-gray-500 text-sm font-bold mb-6">
+          <h2 className="text-xl font-black text-white uppercase tracking-widest mb-3">Account Created</h2>
+          <p className="text-white/50 text-sm font-bold mb-6">
             Check your email to verify your account before logging in.
           </p>
           <Link to="/login" className="text-red-600 text-sm font-black uppercase tracking-widest hover:text-red-700 transition-colors">
@@ -80,13 +77,10 @@ const Register = () => {
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4">
       <div className="w-full max-w-md">
-        <div
-          className="bg-white border-2 border-black rounded-2xl p-8"
-          style={{ boxShadow: '6px 6px 0 #000' }}
-        >
+        <div className="glass rounded-2xl p-8">
           <div className="mb-8">
-            <h1 className="text-2xl font-black text-black uppercase tracking-widest">Create Account</h1>
-            <p className="text-gray-500 text-sm font-bold uppercase tracking-wider mt-1">
+            <h1 className="text-2xl font-black text-white uppercase tracking-widest">Create Account</h1>
+            <p className="text-white/50 text-sm font-bold uppercase tracking-wider mt-1">
               Already have one?{' '}
               <Link to="/login" className="text-red-600 hover:text-red-700 transition-colors">Sign in</Link>
             </p>
@@ -107,7 +101,7 @@ const Register = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-red-600 text-white font-black uppercase tracking-widest text-sm rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 bg-red-600 text-white font-black uppercase tracking-widest text-sm rounded-xl shadow-[0_0_16px_rgba(220,38,38,0.5)] hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Creating account...' : 'Create Account'}
             </button>

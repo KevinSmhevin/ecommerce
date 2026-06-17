@@ -3,68 +3,121 @@
 @tailwind utilities;
 
 /* ─────────────────────────────────────────
-   shadcn CSS variables — white/red/black
+   Theme tokens — dark "control panel" theme.
+   Black base, red primary, white text.
 ───────────────────────────────────────── */
 @layer base {
   :root {
-    --background:           0 0% 100%;
-    --foreground:           0 0% 0%;
-    --card:                 0 0% 100%;
-    --card-foreground:      0 0% 0%;
-    --popover:              0 0% 100%;
-    --popover-foreground:   0 0% 0%;
+    --background:           240 5% 11%;
+    --foreground:           0 0% 98%;
+    --card:                 0 0% 8%;
+    --card-foreground:      0 0% 98%;
+    --popover:              0 0% 8%;
+    --popover-foreground:   0 0% 98%;
     --primary:              0 72% 51%;    /* #DC2626 */
     --primary-foreground:   0 0% 100%;
-    --secondary:            0 0% 96%;
-    --secondary-foreground: 0 0% 0%;
-    --muted:                0 0% 96%;
-    --muted-foreground:     0 0% 45%;
-    --accent:               0 0% 96%;
-    --accent-foreground:    0 0% 0%;
+    --secondary:            0 0% 12%;
+    --secondary-foreground: 0 0% 98%;
+    --muted:                0 0% 12%;
+    --muted-foreground:     0 0% 60%;
+    --accent:               0 0% 14%;
+    --accent-foreground:    0 0% 98%;
     --destructive:          0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border:               0 0% 89.8%;
-    --input:                0 0% 89.8%;
+    --border:               0 0% 100%;    /* used with /opacity modifiers */
+    --input:                0 0% 18%;
     --ring:                 0 72% 51%;
-    --radius:               0.5rem;
+    --radius:               0.875rem;
+  }
+
+  html {
+    background-color: #1a1a1d;
   }
 
   body {
     @apply text-foreground font-sans antialiased;
-    background-color: #f0f0f0;
-    background-image: radial-gradient(circle, rgba(0,0,0,0.15) 1px, transparent 1px);
-    background-size: 22px 22px;
+    min-height: 100vh;
+    color-scheme: dark;
+    background-color: #1c1c20;
+    /* DropNotify-style atmosphere on a charcoal-gray base: layered
+       red glow blooms + concentric "topographic" contour rings in
+       red, white, and black, anchored to the corners. Fixed so it
+       stays put while content scrolls. */
+    background-image:
+      radial-gradient(58rem 58rem at 100% -8%,  rgba(220, 38, 38, 0.22), transparent 60%),
+      radial-gradient(46rem 46rem at -8% 108%,  rgba(220, 38, 38, 0.14), transparent 60%),
+      repeating-radial-gradient(circle at 100% 0%,   transparent 0 41px, rgba(220, 38, 38, 0.070) 41px 42px),
+      repeating-radial-gradient(circle at 0% 100%,   transparent 0 49px, rgba(255, 255, 255, 0.045) 49px 50px),
+      repeating-radial-gradient(circle at 8% 12%,    transparent 0 64px, rgba(0, 0, 0, 0.22) 64px 66px),
+      radial-gradient(80rem 80rem at 50% 120%, rgba(0, 0, 0, 0.35), transparent 70%),
+      linear-gradient(180deg, #26262b 0%, #1a1a1d 60%, #141416 100%);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+  }
+
+  /* Fine grain overlay for texture — sits above the background,
+     below all content. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    background-size: 3px 3px;
+  }
+
+  #root {
+    position: relative;
+    z-index: 1;
   }
 }
 
 /* ─────────────────────────────────────────
-   ARCADE theme overrides
+   Glass — light-opacity frosted panels.
+   `.glass` for neutral panels, `.glass-red`
+   for accent panels, `.glass-hover` to add a
+   lift on interaction.
 ───────────────────────────────────────── */
-.theme-arcade {
-  --background:           0 0% 4%;
-  --foreground:           0 0% 98%;
-  --card:                 0 0% 7%;
-  --card-foreground:      0 0% 98%;
-  --popover:              0 0% 7%;
-  --popover-foreground:   0 0% 98%;
-  --muted:                0 0% 10%;
-  --muted-foreground:     0 0% 55%;
-  --accent:               0 0% 10%;
-  --accent-foreground:    0 0% 98%;
-  --border:               0 0% 14%;
-  --input:                0 0% 14%;
+@layer components {
+  .glass {
+    background-color: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px) saturate(135%);
+    -webkit-backdrop-filter: blur(16px) saturate(135%);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    box-shadow:
+      0 12px 40px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .glass-red {
+    background-color: rgba(220, 38, 38, 0.07);
+    backdrop-filter: blur(16px) saturate(135%);
+    -webkit-backdrop-filter: blur(16px) saturate(135%);
+    border: 1px solid rgba(220, 38, 38, 0.30);
+    box-shadow:
+      0 12px 40px rgba(0, 0, 0, 0.45),
+      0 0 28px rgba(220, 38, 38, 0.14),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .glass-hover {
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  }
+  .glass-hover:hover {
+    background-color: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.22);
+    box-shadow:
+      0 18px 50px rgba(0, 0, 0, 0.5),
+      0 0 32px rgba(220, 38, 38, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
 }
 
 /* ─────────────────────────────────────────
-   Arcade-specific utilities
+   Accent utilities
 ───────────────────────────────────────── */
-.arcade-grid {
-  background-image:
-    linear-gradient(rgba(220, 38, 38, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(220, 38, 38, 0.07) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
-
 .glow-red {
   text-shadow: 0 0 10px rgba(220, 38, 38, 0.9), 0 0 25px rgba(220, 38, 38, 0.4);
 }
@@ -73,29 +126,24 @@
   box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.4), 0 0 16px rgba(220, 38, 38, 0.15);
 }
 
-.btn-arcade {
-  box-shadow: 4px 4px 0 #fff, 0 0 20px rgba(220, 38, 38, 0.5);
-}
-
 /* ─────────────────────────────────────────
-   Legacy component classes (kept for
-   existing pages not yet redesigned)
+   Legacy component classes (kept for pages
+   not individually restyled)
 ───────────────────────────────────────── */
 @layer components {
   .btn-primary {
     @apply bg-primary text-primary-foreground px-6 py-2 rounded-md font-medium transition-colors hover:bg-red-700 shadow-sm;
   }
   .btn-secondary {
-    @apply bg-black text-white px-6 py-2 rounded-md font-medium transition-colors hover:bg-gray-800 shadow-sm;
+    @apply bg-white/10 text-white px-6 py-2 rounded-md font-medium transition-colors hover:bg-white/20 shadow-sm;
   }
   .btn-outline {
-    @apply border-2 border-black text-black px-6 py-2 rounded-md font-medium transition-colors hover:bg-black hover:text-white;
+    @apply border border-white/20 text-white px-6 py-2 rounded-md font-medium transition-colors hover:bg-white/10;
   }
   .card {
-    @apply bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg hover:border-gray-300 transition-all;
+    @apply glass glass-hover rounded-2xl;
   }
   .logo-text {
-    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
     letter-spacing: 0.05em;
   }
 }

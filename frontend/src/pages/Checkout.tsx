@@ -177,14 +177,14 @@ const Checkout = () => {
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <h1 className="text-2xl font-black text-black uppercase tracking-widest mb-8">Checkout</h1>
+        <h1 className="text-2xl font-black text-white uppercase tracking-widest mb-8">Checkout</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
           {/* Shipping form */}
           <div className="lg:col-span-2">
-            <div className="bg-white border-2 border-black rounded-2xl p-6" style={{ boxShadow: '4px 4px 0 #000' }}>
-              <h2 className="text-base font-black text-black uppercase tracking-widest mb-6">Shipping Information</h2>
+            <div className="glass rounded-2xl p-6">
+              <h2 className="text-base font-black text-white uppercase tracking-widest mb-6">Shipping Information</h2>
 
               {error && <div className="mb-5"><Alert type="error">{error}</Alert></div>}
 
@@ -208,11 +208,11 @@ const Checkout = () => {
                 <FormField id="zipcode" label="ZIP / Postal Code" type="text"
                   value={formData.zipcode} onChange={handleChange} />
 
-                <div className="pt-4 border-t border-black/10">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-black mb-4">Payment</h3>
+                <div className="pt-4 border-t border-white/10">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-white mb-4">Payment</h3>
                   <div ref={paypalRef} />
                   {!formValid && (
-                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mt-3">
+                    <p className="text-xs text-white/50 font-bold uppercase tracking-wider mt-3">
                       Fill in required fields to enable payment
                     </p>
                   )}
@@ -223,28 +223,25 @@ const Checkout = () => {
 
           {/* Order summary */}
           <div className="lg:col-span-1">
-            <div
-              className="bg-white border-2 border-black rounded-2xl p-6 sticky top-4"
-              style={{ boxShadow: '4px 4px 0 #000' }}
-            >
-              <h2 className="text-base font-black text-black uppercase tracking-widest mb-5">Summary</h2>
+            <div className="glass-red rounded-2xl p-6 sticky top-4">
+              <h2 className="text-base font-black text-white uppercase tracking-widest mb-5">Summary</h2>
               <div className="space-y-3 mb-5">
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex justify-between text-sm">
-                    <span className="text-gray-500 font-bold line-clamp-1 flex-1 pr-2">
+                    <span className="text-white/50 font-bold line-clamp-1 flex-1 pr-2">
                       {item.title} ×{item.quantity}
                     </span>
-                    <span className="font-black text-black shrink-0">
+                    <span className="font-black text-white shrink-0">
                       ${(parseFloat(item.price) * item.quantity).toFixed(2)}
                     </span>
                   </div>
                 ))}
               </div>
-              <div className="pt-4 border-t-2 border-black flex justify-between items-center">
-                <span className="font-black text-black uppercase tracking-wider">Total</span>
+              <div className="pt-4 border-t border-white/10 flex justify-between items-center">
+                <span className="font-black text-white uppercase tracking-wider">Total</span>
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-red-600 rounded-full" />
-                  <span className="text-xl font-black text-black">${getCartTotal().toFixed(2)}</span>
+                  <div className="w-2 h-2 bg-red-600 rounded-full shadow-[0_0_10px_rgba(220,38,38,0.7)]" />
+                  <span className="text-xl font-black text-white">${getCartTotal().toFixed(2)}</span>
                 </div>
               </div>
             </div>
