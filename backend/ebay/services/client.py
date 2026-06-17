@@ -29,12 +29,15 @@ class EbayApiError(RuntimeError):
     """Raised when an authenticated REST call fails."""
 
 
-# Default scopes the sync worker needs. `sell.inventory.readonly` lets us
-# read the seller's inventory items; we keep it tight (no write scope) to
-# match the v1 plan of one-way sync.
+# Default scopes the integration needs. The day-to-day sync only reads, but
+# the one-time `ebay_migrate` (bulk_migrate_listing) is a write, so we request
+# the read-write `sell.inventory` scope rather than `sell.inventory.readonly`.
+# Changing this requires re-running `ebay_oauth`: a refresh can narrow scopes
+# but never broaden them, so a token minted under the old readonly scope can't
+# gain write access without fresh consent.
 DEFAULT_SCOPES = [
     'https://api.ebay.com/oauth/api_scope',
-    'https://api.ebay.com/oauth/api_scope/sell.inventory.readonly',
+    'https://api.ebay.com/oauth/api_scope/sell.inventory',
     'https://api.ebay.com/oauth/api_scope/sell.account.readonly',
 ]
 
@@ -105,12 +108,17 @@ class EbayClient:
         })
 
     def refresh_access_token(self, refresh_token: str, scopes: Optional[list[str]] = None) -> dict:
-        """Mint a new access token from a long-lived refresh token."""
-        return self._token_request({
-            'grant_type': 'refresh_token',
-            'refresh_token': refresh_token,
-            'scope': ' '.join(scopes or DEFAULT_SCOPES),
-        })
+        """Mint a new access token from a long-lived refresh token.
+
+        Only sends `scope` when the caller supplies one. A refresh can narrow
+        scopes but never broaden them, so requesting more than the refresh
+        token was granted makes eBay reject the call — omitting `scope`
+        returns a token with exactly the originally-granted scopes.
+        """
+        data = {'grant_type': 'refresh_token', 'refresh_token': refresh_token}
+        if scopes:
+            data['scope'] = ' '.join(scopes)
+        return self._token_request(data)
 
     def get_application_token(self) -> str:
         """App-level token (client-credentials grant) for app-scoped calls
@@ -150,7 +158,11 @@ class EbayClient:
         ):
             return self._cache_access_token(token.access_token, cached_expiry)
 
-        payload = self.refresh_access_token(token.refresh_token)
+        # Refresh under the scopes this token was actually granted, not the
+        # current DEFAULT_SCOPES — those may be broader (e.g. write access added
+        # for `ebay_migrate`), and a refresh that tries to broaden scope fails.
+        granted_scopes = token.scope.split() if token.scope else None
+        payload = self.refresh_access_token(token.refresh_token, granted_scopes)
         expires_at = now + dt.timedelta(seconds=int(payload['expires_in']))
         token.access_token = payload['access_token']
         token.access_token_expires_at = expires_at
@@ -208,25 +220,80 @@ class EbayClient:
         payload = self._get('/sell/inventory/v1/offer', params={'sku': sku})
         return payload.get('offers') or []
 
+    _BULK_MIGRATE_MAX = 5  # eBay's hard cap on listings per bulk_migrate_listing call.
+
+    def bulk_migrate_listing(self, listing_ids: list[str]) -> list[dict]:
+        """Migrate traditional (site/Trading-API) listings into the Inventory
+        model so the sync's `getInventoryItems` can see them.
+
+        Each listing must already carry a SKU. eBay caps a call at five
+        listings; callers with more should batch. Returns the per-listing
+        `responses` array — each entry has its own `statusCode` (200 on
+        success), top-level `listingId`, and `inventoryItems[]` (the `sku` and,
+        on success, `offerId` are nested there), plus `errors` on failure.
+        """
+        if not listing_ids:
+            return []
+        if len(listing_ids) > self._BULK_MIGRATE_MAX:
+            raise ValueError(
+                f'bulk_migrate_listing accepts at most {self._BULK_MIGRATE_MAX} '
+                'listing IDs per call.'
+            )
+        payload = self._post(
+            '/sell/inventory/v1/bulk_migrate_listing',
+            {'requests': [{'listingId': listing_id} for listing_id in listing_ids]},
+        )
+        return payload.get('responses') or []
+
     # -- Internals -------------------------------------------------------
 
     def _get(self, path: str, params: Optional[dict] = None) -> dict:
         """Authenticated GET against the eBay REST host."""
+        return self._request('GET', path, params=params)
+
+    def _post(self, path: str, json_body: dict) -> dict:
+        """Authenticated JSON POST against the eBay REST host.
+
+        Bulk endpoints answer 200 when every item succeeds and **207
+        Multi-Status** on mixed results, each item carrying its own status in
+        the body — so both are success here, and per-item failures are left for
+        the caller to read. Anything else is a transport-level failure.
+        """
+        return self._request('POST', path, json_body=json_body, ok_statuses=(200, 207))
+
+    def _request(
+        self,
+        method: str,
+        path: str,
+        *,
+        params: Optional[dict] = None,
+        json_body: Optional[dict] = None,
+        ok_statuses: tuple[int, ...] = (200,),
+    ) -> dict:
         token = self.ensure_access_token()
-        resp = self._session.get(
+        headers = {
+            'Authorization': f'Bearer {token}',
+            'Accept': 'application/json',
+            # eBay requires this for marketplace-scoped endpoints.
+            'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
+        }
+        if json_body is not None:
+            headers['Content-Type'] = 'application/json'
+        resp = self._session.request(
+            method,
             f'{self.hosts.api}{path}',
-            headers={
-                'Authorization': f'Bearer {token}',
-                'Accept': 'application/json',
-                # eBay requires this for marketplace-scoped endpoints.
-                'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
-            },
+            headers=headers,
             params=params or {},
+            json=json_body,
             timeout=30,
         )
+        return self._handle_response(resp, path, ok_statuses)
+
+    @staticmethod
+    def _handle_response(resp, path: str, ok_statuses: tuple[int, ...]) -> dict:
         if resp.status_code == 204:
             return {}
-        if resp.status_code != 200:
+        if resp.status_code not in ok_statuses:
             raise EbayApiError(
                 f'eBay {path} returned {resp.status_code}: {resp.text[:500]}'
             )
