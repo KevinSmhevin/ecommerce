@@ -384,6 +384,26 @@ EBAY_DEV_ID = env('EBAY_DEV_ID', default='')
 EBAY_RU_NAME = env('EBAY_RU_NAME', default='')
 # Optional comma-separated allowlist used as a backstop when the
 # EbayCategoryMapping table is empty (e.g. before initial admin setup).
+# Values must be eBay store-category *path names* (as returned in the offer's
+# storeCategoryNames, e.g. "/Pokemon/Cards"), not numeric category IDs.
 EBAY_STORE_CATEGORY_IDS = [
     s.strip() for s in env('EBAY_STORE_CATEGORY_IDS', default='').split(',') if s.strip()
 ]
+
+# Category (by slug) that allowlisted-but-unmapped eBay items are filed under.
+# Required for the allowlist path; without it those items are reported as errors
+# rather than dumped into an arbitrary category.
+EBAY_FALLBACK_CATEGORY_SLUG = env('EBAY_FALLBACK_CATEGORY_SLUG', default='')
+
+# Marketplace account-deletion notification endpoint (required for production
+# keys). The token is what you register in the eBay portal (32-80 chars,
+# [A-Za-z0-9_-]); the endpoint must be the exact public URL you register, since
+# eBay folds it into the challenge hash.
+EBAY_VERIFICATION_TOKEN = env('EBAY_VERIFICATION_TOKEN', default='')
+EBAY_DELETION_ENDPOINT = env('EBAY_DELETION_ENDPOINT', default='')
+
+# When True, deletion notifications that fail x-ebay-signature verification are
+# rejected (HTTP 412) instead of acknowledged. Default False: we still ack
+# (there is no buyer PII to erase) and log the failure, so a verification hiccup
+# can't break eBay's required acknowledgement or trigger retry storms.
+EBAY_REJECT_UNVERIFIED_NOTIFICATIONS = env.bool('EBAY_REJECT_UNVERIFIED_NOTIFICATIONS', default=False)

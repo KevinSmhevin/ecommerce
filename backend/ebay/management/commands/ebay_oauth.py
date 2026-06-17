@@ -1,9 +1,9 @@
 """One-time OAuth bootstrap for the eBay seller account.
 
-Run interactively from a developer machine. The command prints the eBay
-consent URL, waits for you to paste back the `code` query param after
-granting access, and stores the resulting refresh token in the
-`EbayAuthToken` singleton so the cron worker can use it.
+Run interactively from a developer machine (or a Render shell). The command
+prints the eBay consent URL, waits for you to paste back the `code` query
+param after granting access, and stores the resulting refresh token in the
+`EbayAuthToken` singleton so the admin "Sync now" button can use it.
 
 Usage:
     python manage.py ebay_oauth
@@ -11,12 +11,30 @@ Usage:
 """
 
 import datetime as dt
+from urllib.parse import unquote, urlparse
 
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
 from ebay.models import EbayAuthToken
 from ebay.services import EbayAuthError, EbayClient
+
+
+def extract_auth_code(raw: str) -> str:
+    """Normalise whatever the seller pasted into a clean auth code.
+
+    eBay puts the code URL-encoded in the redirect's address bar, so accept
+    the full redirect URL, a bare encoded code, or an already-decoded code.
+    """
+    raw = raw.strip()
+    if 'code=' in raw:
+        query = urlparse(raw).query or raw
+        # Slice the raw substring rather than parse_qsl: parse_qsl decodes with
+        # unquote_plus, turning a literal '+' in the base64-ish code into a space.
+        for part in query.split('&'):
+            if part.startswith('code='):
+                return unquote(part[len('code='):])
+    return unquote(raw)
 
 
 class Command(BaseCommand):
@@ -39,15 +57,20 @@ class Command(BaseCommand):
             ' with a `code=...` query parameter.\n'
         )
 
-        code = options.get('code')
-        if not code:
+        raw_code = options.get('code')
+        if not raw_code:
+            self.stdout.write(
+                '\nPaste the `code` value — or the whole redirect URL; '
+                'either form is fine, encoding is handled for you.'
+            )
             try:
-                code = input('Paste the `code` value here: ').strip()
+                raw_code = input('code or redirect URL: ')
             except EOFError as exc:
                 raise CommandError('No code provided.') from exc
 
-        if not code:
+        if not raw_code or not raw_code.strip():
             raise CommandError('Empty auth code.')
+        code = extract_auth_code(raw_code)
 
         try:
             payload = client.exchange_code(code)

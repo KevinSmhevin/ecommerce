@@ -10,7 +10,9 @@ services:
     region: oregon
     plan: starter
     buildCommand: cd backend && pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput
-    startCommand: cd backend && gunicorn ecommerce.wsgi:application
+    # --timeout 120: the admin "Sync now" button runs the eBay sync in-process;
+    # the default 30s worker timeout is too short once it downloads images.
+    startCommand: cd backend && gunicorn ecommerce.wsgi:application --timeout 120
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.0
@@ -44,6 +46,27 @@ services:
         value: noreply@pokebin.app  # Update to your email
       - key: FRONTEND_URL
         sync: false  # Set this after frontend deploys (e.g., https://pokebin.onrender.com)
+      # eBay integration. The seller-facing sync runs in-process via the
+      # "Sync now" button in Django admin (Ebay → eBay listings), so these
+      # live on the web service rather than a separate worker.
+      - key: EBAY_ENV
+        value: production
+      - key: EBAY_APP_ID
+        sync: false
+      - key: EBAY_CERT_ID
+        sync: false
+      - key: EBAY_DEV_ID
+        sync: false
+      - key: EBAY_RU_NAME
+        sync: false
+      - key: EBAY_STORE_CATEGORY_IDS
+        sync: false  # Optional allowlist of store-category path names
+      - key: EBAY_FALLBACK_CATEGORY_SLUG
+        sync: false  # Required if the allowlist is used (category slug)
+      - key: EBAY_VERIFICATION_TOKEN
+        sync: false  # Account-deletion endpoint token (required for prod keys)
+      - key: EBAY_DELETION_ENDPOINT
+        sync: false  # Exact public URL of /ebay/account-deletion/
 
   # Frontend React Static Site
   - type: web
@@ -56,6 +79,3 @@ services:
         sync: false  # Set this after backend deploys (e.g., https://pokebin-api.onrender.com)
       - key: VITE_PAYPAL_CLIENT_ID
         sync: false  # Set this manually (production PayPal client ID)
-
-
-

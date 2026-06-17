@@ -45,6 +45,9 @@ urlpatterns = [
     
     # Payment app
     path('payment/', include('payment.urls')),
+
+    # eBay public notification endpoints (account-deletion challenge/notify)
+    path('ebay/', include('ebay.urls')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

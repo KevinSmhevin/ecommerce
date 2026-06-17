@@ -29,6 +29,11 @@ class EbayCategoryMapping(models.Model):
 
     The sync worker only mirrors listings whose store category appears here
     with `active=True`.
+
+    Despite the field name, `ebay_store_category_id` holds the store-category
+    *path name* exactly as eBay returns it in the offer's `storeCategoryNames`
+    (e.g. "/Pokemon/Cards") — that string is what the sync matches against, not
+    a numeric category ID.
     """
 
     ebay_store_category_id = models.CharField(max_length=64, unique=True)
