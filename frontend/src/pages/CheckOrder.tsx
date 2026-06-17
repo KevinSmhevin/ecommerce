@@ -44,16 +44,13 @@ const CheckOrder = () => {
     <div className="min-h-screen">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="mb-8">
-          <h1 className="text-2xl font-black text-black uppercase tracking-widest">Check Order</h1>
-          <p className="text-gray-500 text-sm font-bold uppercase tracking-wider mt-1">
+          <h1 className="text-2xl font-black text-white uppercase tracking-widest">Check Order</h1>
+          <p className="text-white/50 text-sm font-bold uppercase tracking-wider mt-1">
             Enter your order number and email
           </p>
         </div>
 
-        <div
-          className="bg-white border-2 border-black rounded-2xl p-6 mb-6"
-          style={{ boxShadow: '4px 4px 0 #000' }}
-        >
+        <div className="glass rounded-2xl p-6 mb-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
@@ -78,7 +75,7 @@ const CheckOrder = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full sm:w-auto px-8 py-3 bg-red-600 text-white font-black uppercase tracking-widest text-sm rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto px-8 py-3 bg-red-600 text-white font-black uppercase tracking-widest text-sm rounded-xl shadow-[0_0_16px_rgba(220,38,38,0.5)] hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Searching...' : 'Search'}
             </button>

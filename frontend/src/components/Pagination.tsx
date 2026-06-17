@@ -31,10 +31,10 @@ const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) 
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className={`px-4 py-2 rounded-lg border-2 font-medium transition-colors ${
+        className={`px-4 py-2 rounded-lg border font-medium transition-colors ${
           currentPage === 1
-            ? 'border-gray-200 text-gray-400 cursor-not-allowed'
-            : 'border-gray-300 text-black hover:border-primary-red hover:text-primary-red'
+            ? 'border-white/5 text-white/25 cursor-not-allowed'
+            : 'glass glass-hover text-white/90'
         }`}
         aria-label="Previous page"
       >
@@ -45,7 +45,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) 
         {pageNumbers.map((page, index) => {
           if (page === 'ellipsis') {
             return (
-              <span key={`ellipsis-${index}`} className="px-2 text-gray-400">
+              <span key={`ellipsis-${index}`} className="px-2 text-white/40">
                 ...
               </span>
             )
@@ -55,10 +55,10 @@ const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) 
             <button
               key={page}
               onClick={() => onPageChange(page)}
-              className={`px-4 py-2 rounded-lg border-2 font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg border font-medium transition-colors ${
                 currentPage === page
-                  ? 'bg-primary-red text-white border-primary-red'
-                  : 'border-gray-300 text-black hover:border-primary-red hover:text-primary-red'
+                  ? 'bg-red-600 text-white border-red-500 shadow-[0_0_16px_rgba(220,38,38,0.5)]'
+                  : 'glass glass-hover text-white/90'
               }`}
               aria-label={`Page ${page}`}
               aria-current={currentPage === page ? 'page' : undefined}
@@ -72,10 +72,10 @@ const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) 
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className={`px-4 py-2 rounded-lg border-2 font-medium transition-colors ${
+        className={`px-4 py-2 rounded-lg border font-medium transition-colors ${
           currentPage === totalPages
-            ? 'border-gray-200 text-gray-400 cursor-not-allowed'
-            : 'border-gray-300 text-black hover:border-primary-red hover:text-primary-red'
+            ? 'border-white/5 text-white/25 cursor-not-allowed'
+            : 'glass glass-hover text-white/90'
         }`}
         aria-label="Next page"
       >

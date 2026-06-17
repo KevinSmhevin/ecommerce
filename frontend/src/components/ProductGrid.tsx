@@ -70,15 +70,12 @@ const ProductGrid = ({ categorySlug, title = 'All Products' }: ProductGridProps)
 
   return (
     <div id="products" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 scroll-mt-8">
-      <div
-        className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 px-6 py-4 bg-white border-2 border-black rounded-xl"
-        style={{ boxShadow: '4px 4px 0 #000' }}
-      >
+      <div className="glass flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 px-6 py-4 rounded-2xl">
         <div className="flex items-center gap-3">
-          <div className="w-3 h-3 bg-red-600 rounded-sm rotate-45 shrink-0" />
-          <h2 className="text-black text-base font-black uppercase tracking-widest">{title}</h2>
+          <div className="w-3 h-3 bg-red-500 rounded-sm rotate-45 shrink-0 shadow-[0_0_10px_rgba(220,38,38,0.8)]" />
+          <h2 className="text-white text-base font-black uppercase tracking-widest">{title}</h2>
           {totalCount > 0 && (
-            <span className="bg-red-600 text-white text-xs font-black px-2 py-0.5 rounded">
+            <span className="bg-red-600 text-white text-xs font-black px-2 py-0.5 rounded shadow-[0_0_10px_rgba(220,38,38,0.6)]">
               {totalCount}
             </span>
           )}
@@ -87,7 +84,7 @@ const ProductGrid = ({ categorySlug, title = 'All Products' }: ProductGridProps)
           <select
             value={selectedCategory}
             onChange={handleCategoryChange}
-            className="bg-white border-2 border-black rounded-lg text-black text-sm font-bold uppercase tracking-wider px-4 py-2 focus:outline-none focus:border-red-600 transition-colors w-full sm:w-auto"
+            className="bg-white/5 border border-white/15 rounded-lg text-white text-sm font-bold uppercase tracking-wider px-4 py-2 focus:outline-none focus:border-red-500 transition-colors w-full sm:w-auto [&>option]:bg-neutral-900 [&>option]:text-white"
           >
             <option value="all">All Categories</option>
             {categoriesList.map((c) => (
@@ -97,7 +94,7 @@ const ProductGrid = ({ categorySlug, title = 'All Products' }: ProductGridProps)
           <select
             value={sortBy}
             onChange={handleSortChange}
-            className="bg-white border-2 border-black rounded-lg text-black text-sm font-bold uppercase tracking-wider px-4 py-2 focus:outline-none focus:border-red-600 transition-colors w-full sm:w-auto"
+            className="bg-white/5 border border-white/15 rounded-lg text-white text-sm font-bold uppercase tracking-wider px-4 py-2 focus:outline-none focus:border-red-500 transition-colors w-full sm:w-auto [&>option]:bg-neutral-900 [&>option]:text-white"
           >
             <option value="default">Default</option>
             <option value="price_asc">Price ↑</option>
@@ -108,11 +105,11 @@ const ProductGrid = ({ categorySlug, title = 'All Products' }: ProductGridProps)
 
       {isInitialLoading ? (
         <div className="flex items-center justify-center h-64">
-          <div className="w-10 h-10 border-4 border-black border-t-red-600 rounded-full animate-spin" />
+          <div className="w-10 h-10 border-4 border-white/20 border-t-red-500 rounded-full animate-spin" />
         </div>
       ) : products.length === 0 ? (
-        <div className="flex items-center justify-center h-48 border-2 border-black rounded-xl">
-          <p className="text-black font-black uppercase tracking-widest text-sm">No products found.</p>
+        <div className="glass flex items-center justify-center h-48 rounded-2xl">
+          <p className="text-white/70 font-black uppercase tracking-widest text-sm">No products found.</p>
         </div>
       ) : (
         <>

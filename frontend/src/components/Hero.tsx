@@ -8,16 +8,13 @@ const handleShopNowClick = (e: MouseEvent<HTMLAnchorElement>) => {
 
 const Hero = () => (
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-10">
-    <div
-      className="relative h-[380px] md:h-[480px] bg-black overflow-hidden rounded-2xl"
-      style={{ border: '4px solid #000', boxShadow: '8px 8px 0 #DC2626' }}
-    >
+    <div className="glass relative h-[380px] md:h-[480px] overflow-hidden rounded-3xl !bg-black/40">
       <div
-        className="absolute inset-0 bg-red-600 hidden md:block"
+        className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 hidden md:block"
         style={{ clipPath: 'polygon(48% 0, 100% 0, 100% 100%, 28% 100%)' }}
       />
       <div
-        className="absolute inset-0 bg-red-600 md:hidden"
+        className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 md:hidden"
         style={{ clipPath: 'polygon(62% 0, 100% 0, 100% 100%, 48% 100%)' }}
       />
       <div
@@ -50,8 +47,7 @@ const Hero = () => (
         <a
           href="#products"
           onClick={handleShopNowClick}
-          className="inline-flex items-center gap-2 px-5 py-3 md:px-8 md:py-4 bg-white text-black font-black uppercase tracking-widest text-xs md:text-sm hover:bg-red-600 hover:text-white transition-colors self-start rounded-xl"
-          style={{ border: '3px solid #fff', boxShadow: '4px 4px 0 #DC2626' }}
+          className="inline-flex items-center gap-2 px-5 py-3 md:px-8 md:py-4 bg-white text-black font-black uppercase tracking-widest text-xs md:text-sm hover:bg-red-600 hover:text-white transition-all self-start rounded-xl border border-white/40 shadow-[0_0_24px_rgba(255,255,255,0.25)] hover:shadow-[0_0_28px_rgba(220,38,38,0.6)]"
         >
           SHOP NOW <ChevronRight className="w-4 h-4" />
         </a>

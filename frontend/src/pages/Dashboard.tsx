@@ -17,17 +17,17 @@ interface DashboardCardProps {
 const DashboardCard = ({ to, icon: Icon, title, subtitle, meta }: DashboardCardProps) => (
   <Link
     to={to}
-    className="group bg-white border border-black/20 rounded-2xl p-6 hover:border-black hover:shadow-lg transition-all duration-200 flex flex-col"
+    className="group glass glass-hover rounded-2xl p-6 transition-all duration-200 flex flex-col"
   >
     <div className="flex items-center justify-between mb-4">
-      <h2 className="text-black font-black text-base uppercase tracking-widest">{title}</h2>
-      <Icon className="w-5 h-5 text-gray-400 group-hover:text-red-600 transition-colors" />
+      <h2 className="text-white font-black text-base uppercase tracking-widest">{title}</h2>
+      <Icon className="w-5 h-5 text-white/50 group-hover:text-red-500 transition-colors" />
     </div>
-    <p className="text-gray-500 text-sm font-bold mb-4 flex-1">{subtitle}</p>
+    <p className="text-white/50 text-sm font-bold mb-4 flex-1">{subtitle}</p>
     {meta && (
       <div className="flex items-center gap-2 mt-auto">
-        <div className="w-2 h-2 bg-red-600 rounded-full" />
-        <span className="text-xs font-black uppercase tracking-widest text-black">{meta}</span>
+        <div className="w-2 h-2 bg-red-600 rounded-full shadow-[0_0_10px_rgba(220,38,38,0.7)]" />
+        <span className="text-xs font-black uppercase tracking-widest text-white">{meta}</span>
       </div>
     )}
   </Link>
@@ -55,8 +55,8 @@ const Dashboard = () => {
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="mb-8">
-          <h1 className="text-2xl font-black text-black uppercase tracking-widest">Dashboard</h1>
-          <p className="text-gray-500 text-sm font-bold uppercase tracking-wider mt-1">
+          <h1 className="text-2xl font-black text-white uppercase tracking-widest">Dashboard</h1>
+          <p className="text-white/50 text-sm font-bold uppercase tracking-wider mt-1">
             Welcome back, {user.username}
           </p>
         </div>
@@ -83,19 +83,19 @@ const Dashboard = () => {
           />
 
           {/* Account info static card */}
-          <div className="bg-white border border-black/20 rounded-2xl p-6 flex flex-col">
+          <div className="glass rounded-2xl p-6 flex flex-col">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-black font-black text-base uppercase tracking-widest">Account</h2>
-              <Info className="w-5 h-5 text-gray-400" />
+              <h2 className="text-white font-black text-base uppercase tracking-widest">Account</h2>
+              <Info className="w-5 h-5 text-white/50" />
             </div>
             <div className="space-y-3 flex-1">
-              <div className="flex justify-between items-center py-2 border-b border-black/10">
-                <span className="text-xs font-black uppercase tracking-wider text-gray-400">Username</span>
-                <span className="text-sm font-bold text-black">{user.username}</span>
+              <div className="flex justify-between items-center py-2 border-b border-white/10">
+                <span className="text-xs font-black uppercase tracking-wider text-white/50">Username</span>
+                <span className="text-sm font-bold text-white">{user.username}</span>
               </div>
               <div className="flex justify-between items-center py-2">
-                <span className="text-xs font-black uppercase tracking-wider text-gray-400">Email</span>
-                <span className="text-sm font-bold text-black">{user.email}</span>
+                <span className="text-xs font-black uppercase tracking-wider text-white/50">Email</span>
+                <span className="text-sm font-bold text-white">{user.email}</span>
               </div>
             </div>
           </div>

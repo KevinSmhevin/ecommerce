@@ -65,7 +65,7 @@ describe('ProductCard component', () => {
   describe('visual indicator', () => {
     it('renders the red dot price indicator', () => {
       const { container } = renderCard()
-      const dot = container.querySelector('.bg-red-600.rounded-full')
+      const dot = container.querySelector('.bg-red-500.rounded-full')
       expect(dot).toBeInTheDocument()
     })
   })

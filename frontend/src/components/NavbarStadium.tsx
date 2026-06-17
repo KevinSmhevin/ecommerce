@@ -34,12 +34,12 @@ const NavbarStadium = () => {
 
   return (
     <>
-      <nav className="bg-white border-b-4 border-black">
+      <nav className="glass sticky top-0 z-50 !rounded-none border-x-0 border-t-0 border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative flex items-center justify-between h-16">
 
             {/* Instagram */}
-            <div className="z-10 text-black hover:text-red-600 transition-colors">
+            <div className="z-10 text-white/80 hover:text-red-500 transition-colors">
               <InstagramLink />
             </div>
 
@@ -58,7 +58,7 @@ const NavbarStadium = () => {
                   <div className="w-3 h-3 rounded-full bg-white border-2 border-black" />
                 </div>
               </div>
-              <span className="text-2xl font-black text-black tracking-tighter uppercase">
+              <span className="text-2xl font-black text-white tracking-tighter uppercase">
                 POKEBIN
               </span>
             </Link>
@@ -67,12 +67,12 @@ const NavbarStadium = () => {
             <div className="hidden lg:flex items-center gap-0 z-10">
               <Link
                 to="/cart"
-                className="relative flex items-center gap-2 px-5 py-5 text-black text-sm font-black uppercase tracking-wider border-l-2 border-black hover:bg-black hover:text-white transition-colors"
+                className="relative flex items-center gap-2 px-5 py-5 text-white/90 text-sm font-black uppercase tracking-wider border-l border-white/10 hover:bg-white/10 hover:text-white transition-colors"
               >
                 <ShoppingCart className="w-4 h-4" />
                 Cart
                 {cartCount > 0 && (
-                  <span className="bg-red-600 text-white text-xs font-black px-1.5 py-0.5 min-w-[20px] text-center">
+                  <span className="bg-red-600 text-white text-xs font-black px-1.5 py-0.5 min-w-[20px] text-center rounded shadow-[0_0_10px_rgba(220,38,38,0.7)]">
                     {cartCount}
                   </span>
                 )}
@@ -80,42 +80,41 @@ const NavbarStadium = () => {
 
               <Link
                 to="/check-order"
-                className="px-5 py-5 text-black text-sm font-black uppercase tracking-wider border-l-2 border-black hover:bg-black hover:text-white transition-colors"
+                className="px-5 py-5 text-white/90 text-sm font-black uppercase tracking-wider border-l border-white/10 hover:bg-white/10 hover:text-white transition-colors"
               >
                 Orders
               </Link>
 
               {user ? (
-                <div className="relative border-l-2 border-black">
+                <div className="relative border-l border-white/10">
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
                     onBlur={() => setTimeout(() => setUserMenuOpen(false), 200)}
-                    className="flex items-center gap-1.5 px-5 py-5 text-black text-sm font-black uppercase tracking-wider hover:bg-black hover:text-white transition-colors focus:outline-none"
+                    className="flex items-center gap-1.5 px-5 py-5 text-white/90 text-sm font-black uppercase tracking-wider hover:bg-white/10 hover:text-white transition-colors focus:outline-none"
                   >
                     {user.username}
                     <ChevronDown className={`w-3 h-3 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
                   {userMenuOpen && (
                     <div
-                      className="absolute top-full right-0 w-52 bg-white border-4 border-black z-50 overflow-hidden"
-                      style={{ boxShadow: '4px 4px 0 #000' }}
+                      className="glass absolute top-full right-0 mt-2 w-52 rounded-xl z-50 overflow-hidden"
                       onMouseDown={(e) => e.preventDefault()}
                     >
-                      <div className="px-4 py-3 bg-black text-white">
-                        <p className="text-sm font-black truncate">{user.username}</p>
-                        <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                      <div className="px-4 py-3 bg-white/5 border-b border-white/10">
+                        <p className="text-sm font-black text-white truncate">{user.username}</p>
+                        <p className="text-xs text-white/50 truncate">{user.email}</p>
                       </div>
                       <Link
                         to="/dashboard"
                         onClick={() => setUserMenuOpen(false)}
-                        className="block px-4 py-3 text-black text-sm font-black uppercase tracking-wider border-b-2 border-black hover:bg-red-600 hover:text-white transition-colors"
+                        className="block px-4 py-3 text-white/90 text-sm font-black uppercase tracking-wider border-b border-white/10 hover:bg-red-600 hover:text-white transition-colors"
                       >
                         Dashboard
                       </Link>
                       <button
                         type="button"
                         onClick={handleLogout}
-                        className="w-full text-left px-4 py-3 text-black text-sm font-black uppercase tracking-wider hover:bg-red-600 hover:text-white transition-colors"
+                        className="w-full text-left px-4 py-3 text-white/90 text-sm font-black uppercase tracking-wider hover:bg-red-600 hover:text-white transition-colors"
                       >
                         Logout
                       </button>
@@ -126,13 +125,13 @@ const NavbarStadium = () => {
                 <>
                   <Link
                     to="/login"
-                    className="px-5 py-5 text-black text-sm font-black uppercase tracking-wider border-l-2 border-black hover:bg-black hover:text-white transition-colors"
+                    className="px-5 py-5 text-white/90 text-sm font-black uppercase tracking-wider border-l border-white/10 hover:bg-white/10 hover:text-white transition-colors"
                   >
                     Login
                   </Link>
                   <Link
                     to="/register"
-                    className="px-5 py-5 bg-red-600 text-white text-sm font-black uppercase tracking-wider border-l-2 border-black hover:bg-red-700 transition-colors"
+                    className="px-5 py-5 bg-red-600 text-white text-sm font-black uppercase tracking-wider border-l border-white/10 hover:bg-red-700 transition-colors shadow-[inset_0_0_20px_rgba(255,255,255,0.1)]"
                   >
                     Sign Up
                   </Link>
@@ -142,17 +141,17 @@ const NavbarStadium = () => {
 
             {/* Mobile */}
             <div className="flex lg:hidden items-center gap-3 z-10">
-              <Link to="/cart" className="relative text-black hover:text-red-600 transition-colors" onClick={close}>
+              <Link to="/cart" className="relative text-white/90 hover:text-red-500 transition-colors" onClick={close}>
                 <ShoppingCart className="w-6 h-6" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-black w-5 h-5 flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-black w-5 h-5 flex items-center justify-center rounded-full shadow-[0_0_10px_rgba(220,38,38,0.7)]">
                     {cartCount}
                   </span>
                 )}
               </Link>
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="text-black hover:text-red-600 transition-colors"
+                className="text-white/90 hover:text-red-500 transition-colors"
               >
                 {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
@@ -162,22 +161,22 @@ const NavbarStadium = () => {
 
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t-4 border-black">
-            <Link to="/check-order" onClick={close} className="block px-6 py-4 text-black text-sm font-black uppercase tracking-wider border-b-2 border-black hover:bg-red-600 hover:text-white transition-colors">
+          <div className="lg:hidden border-t border-white/10 bg-white/5">
+            <Link to="/check-order" onClick={close} className="block px-6 py-4 text-white/90 text-sm font-black uppercase tracking-wider border-b border-white/10 hover:bg-red-600 hover:text-white transition-colors">
               Orders
             </Link>
             {user ? (
               <>
-                <div className="px-6 py-4 bg-black text-white border-b-2 border-black">
+                <div className="px-6 py-4 bg-white/5 text-white border-b border-white/10">
                   <p className="text-sm font-black">{user.username}</p>
-                  <p className="text-xs text-gray-400">{user.email}</p>
+                  <p className="text-xs text-white/50">{user.email}</p>
                 </div>
-                <Link to="/dashboard" onClick={close} className="block px-6 py-4 text-black text-sm font-black uppercase tracking-wider border-b-2 border-black hover:bg-black hover:text-white transition-colors">Dashboard</Link>
-                <button type="button" onClick={handleLogout} className="w-full text-left px-6 py-4 text-black text-sm font-black uppercase tracking-wider border-b-2 border-black hover:bg-red-600 hover:text-white transition-colors">Logout</button>
+                <Link to="/dashboard" onClick={close} className="block px-6 py-4 text-white/90 text-sm font-black uppercase tracking-wider border-b border-white/10 hover:bg-white/10 hover:text-white transition-colors">Dashboard</Link>
+                <button type="button" onClick={handleLogout} className="w-full text-left px-6 py-4 text-white/90 text-sm font-black uppercase tracking-wider border-b border-white/10 hover:bg-red-600 hover:text-white transition-colors">Logout</button>
               </>
             ) : (
               <>
-                <Link to="/login" onClick={close} className="block px-6 py-4 text-black text-sm font-black uppercase tracking-wider border-b-2 border-black hover:bg-black hover:text-white transition-colors">Login</Link>
+                <Link to="/login" onClick={close} className="block px-6 py-4 text-white/90 text-sm font-black uppercase tracking-wider border-b border-white/10 hover:bg-white/10 hover:text-white transition-colors">Login</Link>
                 <Link to="/register" onClick={close} className="block px-6 py-4 bg-red-600 text-white text-sm font-black uppercase tracking-wider hover:bg-red-700 transition-colors">Sign Up</Link>
               </>
             )}
@@ -185,7 +184,7 @@ const NavbarStadium = () => {
         )}
       </nav>
       {/* Red accent stripe */}
-      <div className="h-1.5 bg-red-600" />
+      <div className="h-1.5 bg-gradient-to-r from-red-600/0 via-red-600 to-red-600/0 shadow-[0_0_18px_rgba(220,38,38,0.6)]" />
     </>
   )
 }
