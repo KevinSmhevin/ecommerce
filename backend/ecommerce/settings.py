@@ -394,3 +394,10 @@ EBAY_STORE_CATEGORY_IDS = [
 # Required for the allowlist path; without it those items are reported as errors
 # rather than dumped into an arbitrary category.
 EBAY_FALLBACK_CATEGORY_SLUG = env('EBAY_FALLBACK_CATEGORY_SLUG', default='')
+
+# Marketplace account-deletion notification endpoint (required for production
+# keys). The token is what you register in the eBay portal (32-80 chars,
+# [A-Za-z0-9_-]); the endpoint must be the exact public URL you register, since
+# eBay folds it into the challenge hash.
+EBAY_VERIFICATION_TOKEN = env('EBAY_VERIFICATION_TOKEN', default='')
+EBAY_DELETION_ENDPOINT = env('EBAY_DELETION_ENDPOINT', default='')

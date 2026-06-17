@@ -63,6 +63,10 @@ services:
         sync: false  # Optional allowlist of store-category path names
       - key: EBAY_FALLBACK_CATEGORY_SLUG
         sync: false  # Required if the allowlist is used (category slug)
+      - key: EBAY_VERIFICATION_TOKEN
+        sync: false  # Account-deletion endpoint token (required for prod keys)
+      - key: EBAY_DELETION_ENDPOINT
+        sync: false  # Exact public URL of /ebay/account-deletion/
 
   # Frontend React Static Site
   - type: web

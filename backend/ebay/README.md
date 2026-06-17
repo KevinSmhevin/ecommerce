@@ -50,6 +50,8 @@ production keys with `production`.
 | `EBAY_RU_NAME` | yes | RuName (OAuth redirect identifier); env-specific |
 | `EBAY_STORE_CATEGORY_IDS` | no | Allowlist of store-category **path names** (e.g. `/Pokemon/Cards`), not numeric IDs; backstop when no mappings exist yet |
 | `EBAY_FALLBACK_CATEGORY_SLUG` | if allowlist used | Category slug allowlisted-but-unmapped items are filed under; without it they error instead of landing in an arbitrary category |
+| `EBAY_VERIFICATION_TOKEN` | for production keys | Token registered in the eBay portal for the account-deletion endpoint (32–80 chars, `[A-Za-z0-9_-]`) |
+| `EBAY_DELETION_ENDPOINT` | for production keys | The exact public URL of the account-deletion endpoint (folded into the challenge hash, so it must match the portal value byte-for-byte) |
 
 Get the keys and RuName from the [eBay developer console](https://developer.ebay.com/).
 The refresh token is **not** an env var — it lives in the database
@@ -86,6 +88,27 @@ must hold the store-category **path name** as eBay returns it in
 - **Admin button:** Ebay → eBay listings → **Sync now**.
 - **CLI (bulk / initial import):** `python manage.py sync_ebay`
   (`--dry-run` to preview counts without writing).
+
+## Marketplace account-deletion endpoint (required for production keys)
+
+eBay won't grant a **production** keyset until you register and validate an
+account-deletion/closure notification endpoint. This app exposes one at
+`/ebay/account-deletion/` (public, CSRF-exempt):
+
+- **GET** `?challenge_code=…` → `200 {"challengeResponse": sha256(challengeCode + verificationToken + endpoint)}`.
+- **POST** (a real deletion event) → `200` acknowledgement. Pokebin stores no
+  eBay buyer PII (it only reads the seller's own inventory), so there's nothing
+  to erase — but the endpoint must still ack.
+
+To set it up:
+
+1. Pick a verification token (32–80 chars, `[A-Za-z0-9_-]`).
+2. Set `EBAY_VERIFICATION_TOKEN` to it and `EBAY_DELETION_ENDPOINT` to the exact
+   public URL (e.g. `https://pokebin-api.onrender.com/ebay/account-deletion/`).
+   The URL must match the portal value **byte-for-byte** — it's hashed.
+3. In the eBay developer portal → **Alerts and Notifications**, enter the same
+   endpoint URL + token and an alert email, then **Send Test Notification** /
+   save. eBay calls the GET challenge; a matching hash marks the endpoint valid.
 
 ## Production notes
 
