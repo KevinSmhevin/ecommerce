@@ -21,6 +21,10 @@ const ProductDetail = () => {
 
   const images = product ? collectImages(product) : []
 
+  useEffect(() => {
+    setSelectedIndex(0)
+  }, [product?.id])
+
   const showPrevImage = () => setSelectedIndex((i) => (i > 0 ? i - 1 : images.length - 1))
   const showNextImage = () => setSelectedIndex((i) => (i < images.length - 1 ? i + 1 : 0))
 
