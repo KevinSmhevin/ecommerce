@@ -8,7 +8,7 @@
 ───────────────────────────────────────── */
 @layer base {
   :root {
-    --background:           240 5% 11%;
+    --background:           240 6% 16%;
     --foreground:           0 0% 98%;
     --card:                 0 0% 8%;
     --card-foreground:      0 0% 98%;
@@ -31,26 +31,22 @@
   }
 
   html {
-    background-color: #1a1a1d;
+    background-color: #26262c;
   }
 
   body {
     @apply text-foreground font-sans antialiased;
     min-height: 100vh;
     color-scheme: dark;
-    background-color: #1c1c20;
-    /* DropNotify-style atmosphere on a charcoal-gray base: layered
-       red glow blooms + concentric "topographic" contour rings in
-       red, white, and black, anchored to the corners. Fixed so it
-       stays put while content scrolls. */
+    background-color: #26262c;
+    /* Lighter charcoal base with soft red glow blooms in opposite
+       corners and a static set of black concentric rings top-left.
+       The animated red ring bursts (RingBackground) layer on top. */
     background-image:
-      radial-gradient(58rem 58rem at 100% -8%,  rgba(220, 38, 38, 0.22), transparent 60%),
-      radial-gradient(46rem 46rem at -8% 108%,  rgba(220, 38, 38, 0.14), transparent 60%),
-      repeating-radial-gradient(circle at 100% 0%,   transparent 0 41px, rgba(220, 38, 38, 0.070) 41px 42px),
-      repeating-radial-gradient(circle at 0% 100%,   transparent 0 49px, rgba(255, 255, 255, 0.045) 49px 50px),
-      repeating-radial-gradient(circle at 8% 12%,    transparent 0 64px, rgba(0, 0, 0, 0.22) 64px 66px),
-      radial-gradient(80rem 80rem at 50% 120%, rgba(0, 0, 0, 0.35), transparent 70%),
-      linear-gradient(180deg, #26262b 0%, #1a1a1d 60%, #141416 100%);
+      radial-gradient(58rem 58rem at 100% -8%, rgba(220, 38, 38, 0.16), transparent 60%),
+      radial-gradient(46rem 46rem at -8% 108%, rgba(220, 38, 38, 0.10), transparent 60%),
+      repeating-radial-gradient(circle at 8% 12%, transparent 0 64px, rgba(0, 0, 0, 0.22) 64px 66px),
+      linear-gradient(180deg, #2e2e35 0%, #26262c 55%, #1f1f24 100%);
     background-attachment: fixed;
     background-repeat: no-repeat;
   }
@@ -71,6 +67,47 @@
   #root {
     position: relative;
     z-index: 1;
+  }
+}
+
+/* ─────────────────────────────────────────
+   Animated circular lines — concentric red
+   rings (radar bursts) that fade in and out on
+   staggered loops. Rendered by <RingBackground />.
+   A radial mask fades each burst's rings out
+   toward its edges so they read as soft circles
+   rather than a square patch of rings.
+───────────────────────────────────────── */
+@layer components {
+  .ring-field {
+    position: fixed;
+    inset: 0;
+    z-index: -10;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .ring-burst {
+    position: absolute;
+    background-image: repeating-radial-gradient(
+      circle at center,
+      transparent 0 64px,
+      rgba(220, 38, 38, 0.55) 64px 66px
+    );
+    -webkit-mask-image: radial-gradient(circle at center, #000 0%, #000 38%, transparent 72%);
+            mask-image: radial-gradient(circle at center, #000 0%, #000 38%, transparent 72%);
+    opacity: 0;
+    filter: drop-shadow(0 0 6px rgba(220, 38, 38, 0.45));
+    animation: ring-fade 8s ease-in-out infinite;
+  }
+
+  @keyframes ring-fade {
+    0%, 100% { opacity: 0; }
+    50%      { opacity: 0.85; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ring-burst { animation: none; }
   }
 }
 
