@@ -40,12 +40,10 @@
     color-scheme: dark;
     background-color: #26262c;
     /* Lighter charcoal base with soft red glow blooms in opposite
-       corners and a static set of black concentric rings top-left.
-       The animated red ring bursts (RingBackground) layer on top. */
+       corners. The wave layers (WaveBackground) draw on top. */
     background-image:
       radial-gradient(58rem 58rem at 100% -8%, rgba(220, 38, 38, 0.16), transparent 60%),
       radial-gradient(46rem 46rem at -8% 108%, rgba(220, 38, 38, 0.10), transparent 60%),
-      repeating-radial-gradient(circle at 8% 12%, transparent 0 64px, rgba(0, 0, 0, 0.22) 64px 66px),
       linear-gradient(180deg, #2e2e35 0%, #26262c 55%, #1f1f24 100%);
     background-attachment: fixed;
     background-repeat: no-repeat;
@@ -71,15 +69,16 @@
 }
 
 /* ─────────────────────────────────────────
-   Animated circular lines — concentric red
-   rings (radar bursts) that fade in and out on
-   staggered loops. Rendered by <RingBackground />.
-   A radial mask fades each burst's rings out
-   toward its edges so they read as soft circles
-   rather than a square patch of rings.
+   Wave layers — thick, uneven curvy lines drawn
+   as tiling SVG patterns by <WaveBackground />.
+   Static black waves + red waves that slowly
+   travel. The rotor is rotated 45deg (and
+   oversized so it still covers the viewport) so
+   the lines run top-left → bottom-right and the
+   red layer drifts that way. Red lines glow.
 ───────────────────────────────────────── */
 @layer components {
-  .ring-field {
+  .wave-field {
     position: fixed;
     inset: 0;
     z-index: -10;
@@ -87,27 +86,24 @@
     overflow: hidden;
   }
 
-  .ring-burst {
+  .wave-rotor {
     position: absolute;
-    background-image: repeating-radial-gradient(
-      circle at center,
-      transparent 0 64px,
-      rgba(220, 38, 38, 0.55) 64px 66px
-    );
-    -webkit-mask-image: radial-gradient(circle at center, #000 0%, #000 38%, transparent 72%);
-            mask-image: radial-gradient(circle at center, #000 0%, #000 38%, transparent 72%);
-    opacity: 0;
-    filter: drop-shadow(0 0 6px rgba(220, 38, 38, 0.45));
-    animation: ring-fade 8s ease-in-out infinite;
+    top: 50%;
+    left: 50%;
+    width: 180vmax;
+    height: 180vmax;
+    transform: translate(-50%, -50%) rotate(45deg);
+    transform-origin: center;
   }
 
-  @keyframes ring-fade {
-    0%, 100% { opacity: 0; }
-    50%      { opacity: 0.85; }
+  .wave-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .ring-burst { animation: none; }
+  .wave-lava {
+    filter: drop-shadow(0 0 5px rgba(255, 90, 0, 0.7)) drop-shadow(0 0 12px rgba(220, 38, 38, 0.45));
   }
 }
 
