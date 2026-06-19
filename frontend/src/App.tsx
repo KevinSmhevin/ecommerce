@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { CartProvider } from '@/context/CartContext'
-import RingBackground from '@/components/RingBackground'
+import WaveBackground from '@/components/WaveBackground'
 import NavbarStadium from '@/components/NavbarStadium'
 import PageSpinner from '@/components/PageSpinner'
 import Home from '@/pages/Home'
@@ -27,7 +27,7 @@ const App = () => (
   <CartProvider>
     <Router>
       <div className="min-h-screen">
-        <RingBackground />
+        <WaveBackground />
         <NavbarStadium />
         <main>
           <Suspense fallback={<PageSpinner />}>
