@@ -24,14 +24,12 @@ test.beforeEach(async ({ page }) => {
 })
 
 test('anonymous user can browse, add to cart, and reach a gated checkout', async ({ page }) => {
-  // 1) Land on home and pick the first product card from the grid.
+  // 1) Land on home and pick the first product card from a category carousel.
   await page.goto('/')
 
-  const productGrid = page.locator('#products')
-  await expect(productGrid).toBeVisible()
-
-  // ProductCard renders a Link to /product/:slug — first one in the grid.
-  const firstProductLink = productGrid.locator('a[href^="/product/"]').first()
+  // The home page now renders per-category horizontal carousels of
+  // ProductCards (no single #products grid). Pick the first product link.
+  const firstProductLink = page.locator('a[href^="/product/"]').first()
   await expect(firstProductLink).toBeVisible()
   const productTitle = (await firstProductLink.locator('h3').textContent())?.trim()
   expect(productTitle).toBeTruthy()
