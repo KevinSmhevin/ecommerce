@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useProductsQuery } from '@/hooks/useProductsQuery'
-import { displayCategoryName } from '@/lib/categories'
+import { categoryBannerImage, displayCategoryName } from '@/lib/categories'
 import type { Category } from '@/types/api'
 import ProductCard from './ProductCard'
 import { Skeleton } from './ui/skeleton'
@@ -20,6 +20,8 @@ const CategorySection = ({ category }: CategorySectionProps) => {
   const scrollerRef = useRef<HTMLDivElement>(null)
   const productsQuery = useProductsQuery({ category: category.slug })
   const products = (productsQuery.data?.results ?? []).slice(0, MAX_PRODUCTS)
+  const name = displayCategoryName(category.name)
+  const bannerImage = categoryBannerImage(category.slug)
 
   const scrollByStep = (direction: 1 | -1) => {
     scrollerRef.current?.scrollBy({ left: direction * SCROLL_STEP_PX, behavior: 'smooth' })
@@ -32,18 +34,30 @@ const CategorySection = ({ category }: CategorySectionProps) => {
       id={categorySectionId(category.slug)}
       className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 scroll-mt-24"
     >
-      <div className="flex items-center justify-between gap-4 mb-5">
-        <div className="flex items-center gap-3">
-          <div className="w-3 h-3 bg-red-500 rounded-sm rotate-45 shrink-0 shadow-[0_0_10px_rgba(220,38,38,0.8)]" />
-          <h2 className="text-white text-base font-black uppercase tracking-widest">{displayCategoryName(category.name)}</h2>
+      <Link
+        to={`/category/${category.slug}`}
+        className="group relative mb-5 block h-40 overflow-hidden rounded-2xl border border-white/10 md:h-48"
+      >
+        {bannerImage ? (
+          <img
+            src={bannerImage}
+            alt={name}
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-800" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+        <div className="absolute inset-0 flex flex-col items-start justify-end p-5">
+          <div className="flex items-center gap-3">
+            <div className="h-3 w-3 shrink-0 rotate-45 rounded-sm bg-red-500 shadow-[0_0_10px_rgba(220,38,38,0.8)]" />
+            <h2 className="text-lg font-black uppercase tracking-widest text-white drop-shadow">{name}</h2>
+          </div>
+          <span className="mt-1 flex items-center gap-1 text-xs font-black uppercase tracking-widest text-white/70 transition-colors group-hover:text-red-400">
+            View all <ChevronRight className="h-3.5 w-3.5" />
+          </span>
         </div>
-        <Link
-          to={`/category/${category.slug}`}
-          className="flex items-center gap-1 shrink-0 text-white/70 hover:text-red-400 text-xs font-black uppercase tracking-widest transition-colors"
-        >
-          View all <ChevronRight className="w-3.5 h-3.5" />
-        </Link>
-      </div>
+      </Link>
 
       <div className="group/scroller relative">
         <button
