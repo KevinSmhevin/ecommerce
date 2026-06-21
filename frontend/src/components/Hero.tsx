@@ -1,63 +1,132 @@
-import type { MouseEvent } from 'react'
-import { ChevronRight } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useCategoriesQuery } from '@/hooks/useCategoriesQuery'
+import { categorySectionId } from './CategorySection'
 
-const handleShopNowClick = (e: MouseEvent<HTMLAnchorElement>) => {
-  e.preventDefault()
-  document.querySelector('#products')?.scrollIntoView({ behavior: 'smooth' })
+const CATEGORY_IMAGES: Record<string, string> = {
+  'graded-pokemon-english': '/banners/mini/graded-pokemon-english.png',
+  'graded-pokemon-japanese': '/banners/mini/graded-pokemon-japanese.png',
+  'graded-one-piece': '/banners/mini/graded-one-piece.png',
 }
 
-const Hero = () => (
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-10">
-    <div className="glass relative h-[380px] md:h-[480px] overflow-hidden rounded-3xl !bg-black/40">
-      <div
-        className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 hidden md:block"
-        style={{ clipPath: 'polygon(48% 0, 100% 0, 100% 100%, 28% 100%)' }}
-      />
-      <div
-        className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 md:hidden"
-        style={{ clipPath: 'polygon(62% 0, 100% 0, 100% 100%, 48% 100%)' }}
-      />
-      <div
-        className="absolute inset-0 opacity-10 hidden md:block"
-        style={{
-          clipPath: 'polygon(48% 0, 100% 0, 100% 100%, 28% 100%)',
-          backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)',
-          backgroundSize: '20px 20px',
-        }}
-      />
-      <div
-        className="absolute inset-0 opacity-10 md:hidden"
-        style={{
-          clipPath: 'polygon(62% 0, 100% 0, 100% 100%, 48% 100%)',
-          backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)',
-          backgroundSize: '20px 20px',
-        }}
-      />
+const ROTATION_MS = 4000
 
-      <div className="relative h-full flex flex-col justify-center px-6 md:px-16 max-w-[58%] md:max-w-[58%]">
-        <div className="flex items-center gap-2 mb-3 md:mb-4">
-          <div className="h-px w-8 bg-red-500" />
-          <p className="text-red-500 text-xs font-black uppercase tracking-widest">Premium TCG Store</p>
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+const scrollToCategory = (slug: string) => {
+  document.getElementById(categorySectionId(slug))?.scrollIntoView({ behavior: 'smooth' })
+}
+
+const Hero = () => {
+  const { data: categories = [] } = useCategoriesQuery()
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [paused, setPaused] = useState(false)
+
+  useEffect(() => {
+    if (paused || categories.length <= 1 || prefersReducedMotion()) return
+    const timer = window.setInterval(() => {
+      setActiveIndex((i) => (i + 1) % categories.length)
+    }, ROTATION_MS)
+    return () => window.clearInterval(timer)
+  }, [paused, categories.length])
+
+  useEffect(() => {
+    if (categories.length > 0 && activeIndex >= categories.length) setActiveIndex(0)
+  }, [categories.length, activeIndex])
+
+  return (
+    <section className="relative w-full overflow-hidden">
+      <div className="glass relative h-[480px] overflow-hidden !rounded-none !border-x-0 !bg-black/40 md:h-[540px]">
+        <div
+          className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700"
+          style={{ clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 30% 100%)' }}
+        />
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 30% 100%)',
+            backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)',
+            backgroundSize: '20px 20px',
+          }}
+        />
+
+        <div className="relative mx-auto flex h-full max-w-7xl items-center px-4 sm:px-6 lg:px-8">
+          <div className="grid w-full grid-cols-1 items-center gap-8 md:grid-cols-2">
+            <div className="flex flex-col justify-center">
+              <div className="mb-3 flex items-center gap-2 md:mb-4">
+                <div className="h-px w-8 bg-red-500" />
+                <p className="text-xs font-black uppercase tracking-widest text-red-500">Premium TCG Store</p>
+              </div>
+              <h1 className="mb-6 text-4xl font-black uppercase leading-none tracking-tight text-white sm:text-5xl md:text-7xl md:leading-[0.9]">
+                CATCH<br />
+                <span className="text-red-500">EVERY</span><br />
+                CARD.
+              </h1>
+              <div className="flex flex-wrap gap-3">
+                {categories.map((category, index) => (
+                  <button
+                    key={category.id}
+                    type="button"
+                    aria-pressed={index === activeIndex}
+                    onMouseEnter={() => {
+                      setActiveIndex(index)
+                      setPaused(true)
+                    }}
+                    onMouseLeave={() => setPaused(false)}
+                    onFocus={() => {
+                      setActiveIndex(index)
+                      setPaused(true)
+                    }}
+                    onBlur={() => setPaused(false)}
+                    onClick={() => scrollToCategory(category.slug)}
+                    className={`rounded-xl border px-4 py-2.5 text-xs font-black uppercase tracking-widest transition-all ${
+                      index === activeIndex
+                        ? 'border-white bg-white text-black shadow-[0_0_24px_rgba(255,255,255,0.25)]'
+                        : 'border-white/20 bg-white/5 text-white hover:border-red-500 hover:text-red-400'
+                    }`}
+                  >
+                    {category.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative hidden h-[380px] md:block">
+              {categories.map((category, index) => {
+                const image = CATEGORY_IMAGES[category.slug]
+                const isActive = index === activeIndex
+                return (
+                  <button
+                    key={category.id}
+                    type="button"
+                    aria-hidden={!isActive}
+                    tabIndex={isActive ? 0 : -1}
+                    aria-label={`View ${category.name}`}
+                    onClick={() => scrollToCategory(category.slug)}
+                    className={`absolute inset-0 overflow-hidden rounded-2xl border border-white/15 transition-opacity duration-700 ${
+                      isActive ? 'opacity-100' : 'pointer-events-none opacity-0'
+                    }`}
+                  >
+                    {image ? (
+                      <img src={image} alt={category.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="h-full w-full bg-gradient-to-br from-red-600 to-red-800" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                    <span className="absolute bottom-4 left-4 text-sm font-black uppercase tracking-widest text-white drop-shadow">
+                      {category.name}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </div>
-        <h1 className="text-3xl sm:text-4xl md:text-7xl font-black text-white uppercase leading-none md:leading-[0.9] mb-5 md:mb-6 tracking-tight">
-          CATCH<br />
-          <span className="text-red-500">EVERY</span><br />
-          CARD.
-        </h1>
-        <a
-          href="#products"
-          onClick={handleShopNowClick}
-          className="inline-flex items-center gap-2 px-5 py-3 md:px-8 md:py-4 bg-white text-black font-black uppercase tracking-widest text-xs md:text-sm hover:bg-red-600 hover:text-white transition-all self-start rounded-xl border border-white/40 shadow-[0_0_24px_rgba(255,255,255,0.25)] hover:shadow-[0_0_28px_rgba(220,38,38,0.6)]"
-        >
-          SHOP NOW <ChevronRight className="w-4 h-4" />
-        </a>
       </div>
-
-      <div className="absolute right-10 top-1/2 -translate-y-1/2 text-white/60 text-xs font-black uppercase tracking-[0.35em] rotate-90 select-none whitespace-nowrap hidden md:block">
-        Pokémon · One Piece · Graded
-      </div>
-    </div>
-  </div>
-)
+    </section>
+  )
+}
 
 export default Hero
