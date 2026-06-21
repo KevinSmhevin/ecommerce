@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useProductsQuery } from '@/hooks/useProductsQuery'
+import { displayCategoryName } from '@/lib/categories'
 import type { Category } from '@/types/api'
 import ProductCard from './ProductCard'
 import { Skeleton } from './ui/skeleton'
@@ -34,7 +35,7 @@ const CategorySection = ({ category }: CategorySectionProps) => {
       <div className="flex items-center justify-between gap-4 mb-5">
         <div className="flex items-center gap-3">
           <div className="w-3 h-3 bg-red-500 rounded-sm rotate-45 shrink-0 shadow-[0_0_10px_rgba(220,38,38,0.8)]" />
-          <h2 className="text-white text-base font-black uppercase tracking-widest">{category.name}</h2>
+          <h2 className="text-white text-base font-black uppercase tracking-widest">{displayCategoryName(category.name)}</h2>
         </div>
         <Link
           to={`/category/${category.slug}`}

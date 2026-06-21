@@ -1,9 +1,11 @@
 import Hero from '@/components/Hero'
 import CategorySection from '@/components/CategorySection'
 import { useCategoriesQuery } from '@/hooks/useCategoriesQuery'
+import { selectFeaturedCategories } from '@/lib/categories'
 
 const Home = () => {
   const { data: categories = [], isPending } = useCategoriesQuery()
+  const featuredCategories = selectFeaturedCategories(categories)
 
   return (
     <div className="min-h-screen">
@@ -14,7 +16,7 @@ const Home = () => {
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-white/20 border-t-red-500" />
           </div>
         ) : (
-          categories.map((category) => <CategorySection key={category.id} category={category} />)
+          featuredCategories.map((category) => <CategorySection key={category.id} category={category} />)
         )}
       </div>
     </div>

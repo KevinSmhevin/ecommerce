@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useCategoriesQuery } from '@/hooks/useCategoriesQuery'
+import { displayCategoryName, selectFeaturedCategories } from '@/lib/categories'
 import { categorySectionId } from './CategorySection'
 
 const CATEGORY_IMAGES: Record<string, string> = {
@@ -20,7 +21,8 @@ const scrollToCategory = (slug: string) => {
 }
 
 const Hero = () => {
-  const { data: categories = [] } = useCategoriesQuery()
+  const { data: allCategories = [] } = useCategoriesQuery()
+  const categories = selectFeaturedCategories(allCategories)
   const [activeIndex, setActiveIndex] = useState(0)
   const [paused, setPaused] = useState(false)
 
@@ -40,11 +42,11 @@ const Hero = () => {
     <section className="relative w-full overflow-hidden">
       <div className="glass relative h-[480px] overflow-hidden !rounded-none !border-x-0 !bg-black/40 md:h-[540px]">
         <div
-          className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700"
+          className="absolute inset-0 hidden bg-gradient-to-br from-red-600 to-red-700 md:block"
           style={{ clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 30% 100%)' }}
         />
         <div
-          className="absolute inset-0 opacity-10"
+          className="absolute inset-0 hidden opacity-10 md:block"
           style={{
             clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 30% 100%)',
             backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)',
@@ -60,9 +62,9 @@ const Hero = () => {
                 <p className="text-xs font-black uppercase tracking-widest text-red-500">Premium TCG Store</p>
               </div>
               <h1 className="mb-6 text-4xl font-black uppercase leading-none tracking-tight text-white sm:text-5xl md:text-7xl md:leading-[0.9]">
-                CATCH<br />
-                <span className="text-red-500">EVERY</span><br />
-                CARD.
+                <span className="block animate-rise-in [animation-delay:0ms] motion-reduce:animate-none">CATCH</span>
+                <span className="block animate-rise-in text-red-500 [animation-delay:150ms] motion-reduce:animate-none">EVERY</span>
+                <span className="block animate-rise-in [animation-delay:300ms] motion-reduce:animate-none">CARD.</span>
               </h1>
               <div className="flex flex-wrap gap-3">
                 {categories.map((category, index) => (
@@ -87,7 +89,7 @@ const Hero = () => {
                         : 'border-white/20 bg-white/5 text-white hover:border-red-500 hover:text-red-400'
                     }`}
                   >
-                    {category.name}
+                    {displayCategoryName(category.name)}
                   </button>
                 ))}
               </div>
@@ -103,7 +105,7 @@ const Hero = () => {
                     type="button"
                     aria-hidden={!isActive}
                     tabIndex={isActive ? 0 : -1}
-                    aria-label={`View ${category.name}`}
+                    aria-label={`View ${displayCategoryName(category.name)}`}
                     onClick={() => scrollToCategory(category.slug)}
                     className={`absolute inset-0 overflow-hidden rounded-2xl border border-white/15 transition-opacity duration-700 ${
                       isActive ? 'opacity-100' : 'pointer-events-none opacity-0'
@@ -116,7 +118,7 @@ const Hero = () => {
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                     <span className="absolute bottom-4 left-4 text-sm font-black uppercase tracking-widest text-white drop-shadow">
-                      {category.name}
+                      {displayCategoryName(category.name)}
                     </span>
                   </button>
                 )

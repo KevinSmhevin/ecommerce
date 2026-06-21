@@ -52,11 +52,12 @@ describe('CategorySection', () => {
     mockedGet.mockReset()
   })
 
-  it('renders the category name and a View all link to the category page', async () => {
+  it('renders the category name without the "Graded" prefix and a View all link to the category page', async () => {
     mockedGet.mockResolvedValue(makeProducts(3))
     renderSection()
     expect(await screen.findByText('Card 1')).toBeInTheDocument()
-    expect(screen.getByText('Graded One Piece')).toBeInTheDocument()
+    expect(screen.getByText('One Piece')).toBeInTheDocument()
+    expect(screen.queryByText('Graded One Piece')).not.toBeInTheDocument()
     const link = screen.getByRole('link', { name: /view all/i })
     expect(link).toHaveAttribute('href', '/category/graded-one-piece')
   })

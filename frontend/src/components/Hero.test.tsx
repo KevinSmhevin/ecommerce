@@ -18,6 +18,7 @@ const categories = [
   { id: 1, name: 'Graded Pokemon English', slug: 'graded-pokemon-english' },
   { id: 2, name: 'Graded Pokemon Japanese', slug: 'graded-pokemon-japanese' },
   { id: 3, name: 'Graded One Piece', slug: 'graded-one-piece' },
+  { id: 4, name: 'Funko Pops', slug: 'funko-pops' },
 ]
 
 const renderHero = () => {
@@ -39,17 +40,23 @@ describe('Hero', () => {
     })
   })
 
-  it('renders a button for each category', async () => {
+  it('renders a button for each featured category with the "Graded" prefix stripped', async () => {
     renderHero()
-    expect(await screen.findByRole('button', { name: 'Graded Pokemon English' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Graded Pokemon Japanese' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Graded One Piece' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Pokemon English' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Pokemon Japanese' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'One Piece' })).toBeInTheDocument()
+  })
+
+  it('omits non-featured categories', async () => {
+    renderHero()
+    await screen.findByRole('button', { name: 'Pokemon English' })
+    expect(screen.queryByRole('button', { name: 'Funko Pops' })).not.toBeInTheDocument()
   })
 
   it('marks a category button active on hover', async () => {
     const user = userEvent.setup()
     renderHero()
-    const second = await screen.findByRole('button', { name: 'Graded Pokemon Japanese' })
+    const second = await screen.findByRole('button', { name: 'Pokemon Japanese' })
     await user.hover(second)
     await waitFor(() => expect(second).toHaveAttribute('aria-pressed', 'true'))
   })
@@ -63,7 +70,7 @@ describe('Hero', () => {
     document.body.appendChild(target)
 
     renderHero()
-    const btn = await screen.findByRole('button', { name: 'Graded One Piece' })
+    const btn = await screen.findByRole('button', { name: 'One Piece' })
     await user.click(btn)
     expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth' })
 
