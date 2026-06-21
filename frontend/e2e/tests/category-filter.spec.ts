@@ -22,15 +22,15 @@ test('category dropdown filters products and updates the URL without a full relo
   const productGrid = page.locator('#products')
   await expect(productGrid).toBeVisible()
 
-  // Wait until the API has populated the grid before we interact.
-  await expect(productGrid.locator('a[href^="/product/"]').first()).toBeVisible()
+  // The category select sits in the grid header and renders regardless of how
+  // many products the starting category has, so we don't wait for product
+  // cards here — the populated-list assertion happens after switching below.
 
   // Tag the window so we can detect a hard reload (a full reload clears it).
   await page.evaluate(() => {
     ;(window as unknown as { __navMarker?: number }).__navMarker = 1
   })
 
-  // The category select sits inside the grid header.
   const categorySelect = productGrid.getByRole('combobox').first()
   await expect(categorySelect).toBeVisible()
 
