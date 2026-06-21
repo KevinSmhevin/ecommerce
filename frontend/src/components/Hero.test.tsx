@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import Hero from './Hero'
+import { categorySectionId } from './CategorySection'
 
 vi.mock('@/config/axios', () => {
   const get = vi.fn()
@@ -56,7 +57,7 @@ describe('Hero', () => {
   it('scrolls to the matching section when a category button is clicked', async () => {
     const user = userEvent.setup()
     const target = document.createElement('div')
-    target.id = 'category-graded-one-piece'
+    target.id = categorySectionId('graded-one-piece')
     const scrollIntoView = vi.fn()
     target.scrollIntoView = scrollIntoView
     document.body.appendChild(target)
