@@ -38,11 +38,11 @@ const CategorySection = ({ category }: CategorySectionProps) => {
       <div className="relative mb-5 overflow-hidden rounded-2xl border border-white/10">
         {bannerImage && (
           <>
-            <img src={bannerImage} alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover object-center opacity-50" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15" />
+            <img src={bannerImage} alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover object-center opacity-40" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 to-black/40" />
           </>
         )}
-        <div className="relative flex min-h-[150px] items-end justify-between gap-4 p-5 md:min-h-[170px]">
+        <div className="relative flex min-h-[120px] items-end justify-between gap-4 p-5 md:min-h-[135px]">
           <div>
             <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-red-500">Graded · Authenticated</span>
             <div className="mt-1.5 flex flex-wrap items-baseline gap-3">
