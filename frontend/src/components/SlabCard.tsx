@@ -10,7 +10,7 @@ const SlabCard = ({ product }: SlabCardProps) => (
     to={`/product/${product.slug}`}
     className="glass group relative flex w-[230px] shrink-0 snap-start flex-col overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1.5 hover:border-red-500/40 hover:shadow-[0_18px_50px_-12px_rgba(220,38,38,0.55)]"
   >
-    <div className="relative m-2.5 mb-0 aspect-[3/4] overflow-hidden rounded-xl bg-black/30">
+    <div className="relative aspect-[3/4] w-full overflow-hidden bg-black/30">
       <div
         className="pointer-events-none absolute inset-0 z-10 opacity-0 transition-opacity duration-500 group-hover:opacity-100 motion-reduce:hidden"
         style={{
@@ -34,7 +34,7 @@ const SlabCard = ({ product }: SlabCardProps) => (
       )}
     </div>
 
-    <div className="flex flex-1 flex-col gap-2 p-3.5">
+    <div className="flex flex-1 flex-col gap-2 border-t border-white/5 p-3.5">
       {product.brand ? (
         <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/40">{product.brand}</span>
       ) : null}
