@@ -61,19 +61,21 @@ const CategorySection = ({ category }: CategorySectionProps) => {
       </div>
 
       <div className="group/rail relative">
-        <div
-          ref={scrollerRef}
-          className="flex gap-4 overflow-x-auto rounded-2xl bg-black/20 px-4 pb-5 pt-4 shadow-[inset_0_2px_14px_rgba(0,0,0,0.4)] backdrop-blur-md snap-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
-          {productsQuery.isPending
-            ? Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="w-[230px] shrink-0">
-                  <Skeleton className="aspect-[3/4] w-full rounded-2xl" />
-                  <Skeleton className="mt-3 h-4 w-3/4" />
-                  <Skeleton className="mt-2 h-4 w-1/3" />
-                </div>
-              ))
-            : products.map((product) => <SlabCard key={product.id} product={product} />)}
+        <div className="overflow-hidden rounded-2xl bg-black/20 shadow-[inset_0_2px_14px_rgba(0,0,0,0.4)] backdrop-blur-md">
+          <div
+            ref={scrollerRef}
+            className="flex gap-4 overflow-x-auto px-5 pb-5 pt-4 snap-x [mask-image:linear-gradient(to_right,transparent,#000_20px,#000_calc(100%_-_20px),transparent)] [scrollbar-width:none] [-webkit-mask-image:linear-gradient(to_right,transparent,#000_20px,#000_calc(100%_-_20px),transparent)] [&::-webkit-scrollbar]:hidden"
+          >
+            {productsQuery.isPending
+              ? Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="w-[230px] shrink-0">
+                    <Skeleton className="aspect-[3/4] w-full rounded-2xl" />
+                    <Skeleton className="mt-3 h-4 w-3/4" />
+                    <Skeleton className="mt-2 h-4 w-1/3" />
+                  </div>
+                ))
+              : products.map((product) => <SlabCard key={product.id} product={product} />)}
+          </div>
         </div>
 
         <button
