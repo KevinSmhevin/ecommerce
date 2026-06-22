@@ -27,7 +27,9 @@ test('checkout pre-fills the saved shipping address and email is reactive', asyn
   //    via its own state setters (not via a localStorage pre-seed, which
   //    races with CartProvider's mount-effect that writes [] back).
   await page.goto('/')
-  const firstProduct = page.locator('#products a[href^="/product/"]').first()
+  // Pick the first catalog card from a category section (not the rotating
+  // "featured" card in the hero).
+  const firstProduct = page.locator('section[id^="category-"] a[href^="/product/"]').first()
   await expect(firstProduct).toBeVisible()
   await firstProduct.click()
 

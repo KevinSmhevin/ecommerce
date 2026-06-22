@@ -24,14 +24,13 @@ test.beforeEach(async ({ page }) => {
 })
 
 test('anonymous user can browse, add to cart, and reach a gated checkout', async ({ page }) => {
-  // 1) Land on home and pick the first product card from the grid.
+  // 1) Land on home and pick the first product card from a category rail.
   await page.goto('/')
 
-  const productGrid = page.locator('#products')
-  await expect(productGrid).toBeVisible()
-
-  // ProductCard renders a Link to /product/:slug — first one in the grid.
-  const firstProductLink = productGrid.locator('a[href^="/product/"]').first()
+  // The home page renders per-category slab rails of ProductCards (plus a
+  // rotating "featured" card in the hero). Pick the first catalog card from a
+  // category section, not the hero feature.
+  const firstProductLink = page.locator('section[id^="category-"] a[href^="/product/"]').first()
   await expect(firstProductLink).toBeVisible()
   const productTitle = (await firstProductLink.locator('h3').textContent())?.trim()
   expect(productTitle).toBeTruthy()
@@ -52,7 +51,9 @@ test('anonymous user can browse, add to cart, and reach a gated checkout', async
 
   // The cart should show one item with the title from the product detail page.
   if (productTitle) {
-    await expect(page.getByRole('link', { name: new RegExp(productTitle, 'i') })).toBeVisible()
+    // Match the title literally — product names can contain regex-special
+    // characters like the parentheses in "Pikachu Plush (Large)".
+    await expect(page.getByRole('link', { name: productTitle })).toBeVisible()
   }
 
   // Bump quantity from 1 to 2 (CartContext clamps at product.stock; seed
