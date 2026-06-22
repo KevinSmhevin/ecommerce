@@ -27,8 +27,11 @@ test('anonymous user can browse, add to cart, and reach a gated checkout', async
   // 1) Land on home and pick the first product card from a category carousel.
   await page.goto('/')
 
-  // The home page now renders per-category horizontal carousels of
-  // ProductCards (no single #products grid). Pick the first product link.
+  // Each category section starts as a full-width banner covering its product
+  // carousel; clicking the banner slides it out to reveal the cards in the
+  // same row.
+  await page.getByRole('button', { name: /show .* products/i }).first().click()
+
   const firstProductLink = page.locator('a[href^="/product/"]').first()
   await expect(firstProductLink).toBeVisible()
   const productTitle = (await firstProductLink.locator('h3').textContent())?.trim()

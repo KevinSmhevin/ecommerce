@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useProductsQuery } from '@/hooks/useProductsQuery'
@@ -18,6 +18,7 @@ interface CategorySectionProps {
 
 const CategorySection = ({ category }: CategorySectionProps) => {
   const scrollerRef = useRef<HTMLDivElement>(null)
+  const [revealed, setRevealed] = useState(false)
   const productsQuery = useProductsQuery({ category: category.slug })
   const products = (productsQuery.data?.results ?? []).slice(0, MAX_PRODUCTS)
   const name = displayCategoryName(category.name)
@@ -34,44 +35,10 @@ const CategorySection = ({ category }: CategorySectionProps) => {
       id={categorySectionId(category.slug)}
       className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 scroll-mt-24"
     >
-      <Link
-        to={`/category/${category.slug}`}
-        className="group relative mb-5 block h-40 overflow-hidden rounded-2xl border border-white/10 md:h-48"
-      >
-        {bannerImage ? (
-          <img
-            src={bannerImage}
-            alt={name}
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-800" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-        <div className="absolute inset-0 flex flex-col items-start justify-end p-5">
-          <div className="flex items-center gap-3">
-            <div className="h-3 w-3 shrink-0 rotate-45 rounded-sm bg-red-500 shadow-[0_0_10px_rgba(220,38,38,0.8)]" />
-            <h2 className="text-lg font-black uppercase tracking-widest text-white drop-shadow">{name}</h2>
-          </div>
-          <span className="mt-1 flex items-center gap-1 text-xs font-black uppercase tracking-widest text-white/70 transition-colors group-hover:text-red-400">
-            View all <ChevronRight className="h-3.5 w-3.5" />
-          </span>
-        </div>
-      </Link>
-
-      <div className="group/scroller relative">
-        <button
-          type="button"
-          aria-label="Scroll left"
-          onClick={() => scrollByStep(-1)}
-          className="hidden md:flex absolute left-0 top-1/2 z-10 h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/70 text-white opacity-0 transition-opacity hover:bg-red-600 group-hover/scroller:opacity-100"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-
+      <div className="group/scroller relative overflow-hidden rounded-2xl">
         <div
           ref={scrollerRef}
-          className="flex gap-5 overflow-x-auto snap-x snap-mandatory pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex gap-5 overflow-x-auto p-2 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {productsQuery.isPending
             ? Array.from({ length: 5 }).map((_, i) => (
@@ -88,14 +55,71 @@ const CategorySection = ({ category }: CategorySectionProps) => {
               ))}
         </div>
 
-        <button
-          type="button"
-          aria-label="Scroll right"
-          onClick={() => scrollByStep(1)}
-          className="hidden md:flex absolute right-0 top-1/2 z-10 h-10 w-10 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/70 text-white opacity-0 transition-opacity hover:bg-red-600 group-hover/scroller:opacity-100"
+        {revealed && (
+          <>
+            <button
+              type="button"
+              aria-label="Show category banner"
+              onClick={() => setRevealed(false)}
+              className="absolute left-3 top-3 z-20 flex items-center gap-1 rounded-full border border-white/20 bg-black/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white transition-colors hover:bg-red-600"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" /> Banner
+            </button>
+            <button
+              type="button"
+              aria-label="Scroll left"
+              onClick={() => scrollByStep(-1)}
+              className="absolute left-0 top-1/2 z-10 hidden h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/70 text-white opacity-0 transition-opacity hover:bg-red-600 group-hover/scroller:opacity-100 md:flex"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              aria-label="Scroll right"
+              onClick={() => scrollByStep(1)}
+              className="absolute right-0 top-1/2 z-10 hidden h-10 w-10 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/70 text-white opacity-0 transition-opacity hover:bg-red-600 group-hover/scroller:opacity-100 md:flex"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </>
+        )}
+
+        <div
+          className={`absolute inset-0 z-10 transition-transform duration-500 ease-out ${
+            revealed ? 'pointer-events-none -translate-x-full' : 'translate-x-0'
+          }`}
         >
-          <ChevronRight className="h-5 w-5" />
-        </button>
+          {bannerImage ? (
+            <img src={bannerImage} alt={name} className="absolute inset-0 h-full w-full object-cover" />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-800" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/55 to-transparent" />
+
+          <button
+            type="button"
+            onClick={() => setRevealed(true)}
+            aria-label={`Show ${name} products`}
+            className="absolute inset-0"
+          />
+
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-start justify-end p-6">
+            <div className="flex items-center gap-3">
+              <div className="h-3 w-3 shrink-0 rotate-45 rounded-sm bg-red-500 shadow-[0_0_10px_rgba(220,38,38,0.8)]" />
+              <h2 className="text-xl font-black uppercase tracking-widest text-white drop-shadow">{name}</h2>
+            </div>
+            <span className="mt-1 flex items-center gap-1 text-xs font-black uppercase tracking-widest text-white/70">
+              Tap to view products <ChevronRight className="h-3.5 w-3.5" />
+            </span>
+          </div>
+
+          <Link
+            to={`/category/${category.slug}`}
+            className="absolute right-5 top-5 z-10 flex items-center gap-1 rounded-full border border-white/20 bg-black/50 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white/80 transition-colors hover:border-red-500 hover:text-red-400"
+          >
+            View all <ChevronRight className="h-3 w-3" />
+          </Link>
+        </div>
       </div>
     </section>
   )

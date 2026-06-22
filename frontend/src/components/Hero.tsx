@@ -15,12 +15,12 @@ const Hero = () => {
       <div className="glass relative h-[380px] overflow-hidden rounded-3xl !bg-black/40 md:h-[480px]">
         <div
           className="absolute inset-0 hidden bg-gradient-to-br from-red-600 to-red-700 md:block"
-          style={{ clipPath: 'polygon(48% 0, 100% 0, 100% 100%, 28% 100%)' }}
+          style={{ clipPath: 'polygon(60% 0, 100% 0, 100% 100%, 40% 100%)' }}
         />
         <div
           className="absolute inset-0 hidden opacity-10 md:block"
           style={{
-            clipPath: 'polygon(48% 0, 100% 0, 100% 100%, 28% 100%)',
+            clipPath: 'polygon(60% 0, 100% 0, 100% 100%, 40% 100%)',
             backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)',
             backgroundSize: '20px 20px',
           }}
