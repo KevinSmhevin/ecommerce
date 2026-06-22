@@ -31,20 +31,20 @@
   }
 
   html {
-    background-color: #26262c;
+    background-color: #3a3a42;
   }
 
   body {
     @apply text-foreground font-sans antialiased;
     min-height: 100vh;
     color-scheme: dark;
-    background-color: #26262c;
-    /* Lighter charcoal base with soft red glow blooms in opposite
+    background-color: #3a3a42;
+    /* Lighter slate base with soft red glow blooms in opposite
        corners. The wave layers (WaveBackground) draw on top. */
     background-image:
-      radial-gradient(58rem 58rem at 100% -8%, rgba(220, 38, 38, 0.16), transparent 60%),
-      radial-gradient(46rem 46rem at -8% 108%, rgba(220, 38, 38, 0.10), transparent 60%),
-      linear-gradient(180deg, #2e2e35 0%, #26262c 55%, #1f1f24 100%);
+      radial-gradient(58rem 58rem at 100% -8%, rgba(220, 38, 38, 0.18), transparent 60%),
+      radial-gradient(46rem 46rem at -8% 108%, rgba(220, 38, 38, 0.12), transparent 60%),
+      linear-gradient(180deg, #44444e 0%, #3a3a42 55%, #303036 100%);
     background-attachment: fixed;
     background-repeat: no-repeat;
   }

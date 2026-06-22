@@ -81,11 +81,18 @@ export default {
           "88%":  { opacity: "0", transform: "translateY(-1.5rem)" },
           "100%": { opacity: "0", transform: "translateY(1.5rem)" },
         },
+        "hud-scan": {
+          "0%":   { top: "-5%",  opacity: "0" },
+          "12%":  { opacity: "0.85" },
+          "88%":  { opacity: "0.85" },
+          "100%": { top: "105%", opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up":   "accordion-up 0.2s ease-out",
         "rise-loop":      "rise-loop 5s ease-in-out infinite backwards",
+        "hud-scan":       "hud-scan 4.5s linear infinite",
       },
     },
   },
