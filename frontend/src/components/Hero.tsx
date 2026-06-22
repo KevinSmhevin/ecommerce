@@ -1,9 +1,30 @@
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useCategoriesQuery } from '@/hooks/useCategoriesQuery'
+import { useProductsQuery } from '@/hooks/useProductsQuery'
 import { displayCategoryName, selectFeaturedCategories } from '@/lib/categories'
+import type { Product } from '@/types/api'
 import { categorySectionId } from './CategorySection'
+
+const ROTATE_MS = 15000
+const FADE_MS = 450
 
 const scrollToCategory = (slug: string) => {
   document.getElementById(categorySectionId(slug))?.scrollIntoView({ behavior: 'smooth' })
+}
+
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+const shuffle = (items: Product[]): Product[] => {
+  const copy = [...items]
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[copy[i], copy[j]] = [copy[j], copy[i]]
+  }
+  return copy
 }
 
 const GRID_BG = {
@@ -17,6 +38,30 @@ const RED_GLOW = { background: 'radial-gradient(70% 90% at 88% 60%, rgba(220,38,
 const Hero = () => {
   const { data: allCategories = [] } = useCategoriesQuery()
   const categories = selectFeaturedCategories(allCategories)
+
+  const { data: productsPage } = useProductsQuery({})
+  const featured = useMemo(() => shuffle(productsPage?.results ?? []), [productsPage])
+
+  const [index, setIndex] = useState(0)
+  const [visible, setVisible] = useState(true)
+
+  useEffect(() => {
+    if (featured.length <= 1 || prefersReducedMotion()) return
+    let swapTimer = 0
+    const rotate = window.setInterval(() => {
+      setVisible(false)
+      swapTimer = window.setTimeout(() => {
+        setIndex((i) => (i + 1) % featured.length)
+        setVisible(true)
+      }, FADE_MS)
+    }, ROTATE_MS)
+    return () => {
+      window.clearInterval(rotate)
+      window.clearTimeout(swapTimer)
+    }
+  }, [featured.length])
+
+  const active = featured.length ? featured[index % featured.length] : undefined
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-10 pt-8 sm:px-6 lg:px-8">
@@ -32,13 +77,46 @@ const Hero = () => {
 
         <div className="pointer-events-none absolute left-0 right-0 h-px animate-hud-scan bg-gradient-to-r from-transparent via-red-500/80 to-transparent shadow-[0_0_12px_rgba(220,38,38,0.8)] motion-reduce:hidden" />
 
-        <div className="pointer-events-none absolute right-8 top-8 hidden h-10 w-10 md:block">
-          <div className="absolute inset-0 rounded-full border border-red-500/40" />
-          <div className="absolute left-1/2 top-1 h-2 w-px -translate-x-1/2 bg-red-500/60" />
-          <div className="absolute bottom-1 left-1/2 h-2 w-px -translate-x-1/2 bg-red-500/60" />
-          <div className="absolute left-1 top-1/2 h-px w-2 -translate-y-1/2 bg-red-500/60" />
-          <div className="absolute right-1 top-1/2 h-px w-2 -translate-y-1/2 bg-red-500/60" />
-        </div>
+        {active && (
+          <Link
+            to={`/product/${active.slug}`}
+            aria-label={`Featured: ${active.title}`}
+            className="group absolute right-6 top-1/2 z-10 hidden w-[230px] -translate-y-1/2 md:block"
+          >
+            <div
+              className={`glass overflow-hidden rounded-2xl border border-white/15 shadow-[0_18px_50px_-18px_rgba(0,0,0,0.7),0_0_24px_-6px_rgba(220,38,38,0.4)] transition-all duration-500 group-hover:-translate-y-1 group-hover:border-red-500/50 ${
+                visible ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              <div className="relative aspect-[3/4] w-full overflow-hidden bg-black/40">
+                <span className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1.5 rounded-full bg-black/70 px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.2em] text-red-400 backdrop-blur">
+                  <span className="h-1.5 w-1.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(220,38,38,0.9)]" />
+                  Featured
+                </span>
+                {active.image_url ? (
+                  <img
+                    src={active.image_url}
+                    alt={active.title}
+                    className="h-full w-full object-contain p-3 transition-transform duration-300 group-hover:scale-105"
+                  />
+                ) : (
+                  <span className="absolute inset-0 flex items-center justify-center text-xs font-bold uppercase tracking-widest text-white/30">
+                    No Image
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center justify-between gap-2 border-t border-white/5 p-3">
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-bold text-white">{active.title}</p>
+                  <p className="font-mono text-sm font-black text-white">${active.price}</p>
+                </div>
+                <span className="shrink-0 font-mono text-[10px] font-black uppercase tracking-widest text-red-400 transition-colors group-hover:text-red-300">
+                  View →
+                </span>
+              </div>
+            </div>
+          </Link>
+        )}
 
         <div className="relative flex h-full max-w-full flex-col justify-center px-6 md:max-w-[62%] md:px-14">
           <div className="mb-4 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.3em] text-white/60">

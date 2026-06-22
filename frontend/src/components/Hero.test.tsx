@@ -36,6 +36,9 @@ describe('Hero', () => {
     mockedGet.mockReset()
     mockedGet.mockImplementation((url: string) => {
       if (url === '/api/categories/') return Promise.resolve({ data: categories })
+      if (url === '/api/products/') {
+        return Promise.resolve({ data: { count: 0, next: null, previous: null, results: [] } })
+      }
       return Promise.reject(new Error(`unexpected ${url}`))
     })
   })

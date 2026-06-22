@@ -27,9 +27,10 @@ test('anonymous user can browse, add to cart, and reach a gated checkout', async
   // 1) Land on home and pick the first product card from a category rail.
   await page.goto('/')
 
-  // The home page renders per-category slab rails of ProductCards (no single
-  // #products grid). Pick the first product link.
-  const firstProductLink = page.locator('a[href^="/product/"]').first()
+  // The home page renders per-category slab rails of ProductCards (plus a
+  // rotating "featured" card in the hero). Pick the first catalog card from a
+  // category section, not the hero feature.
+  const firstProductLink = page.locator('section[id^="category-"] a[href^="/product/"]').first()
   await expect(firstProductLink).toBeVisible()
   const productTitle = (await firstProductLink.locator('h3').textContent())?.trim()
   expect(productTitle).toBeTruthy()
