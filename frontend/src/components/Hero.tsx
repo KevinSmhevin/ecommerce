@@ -33,8 +33,8 @@ const Hero = () => {
           </div>
           <h1 className="mb-6 text-4xl font-black uppercase leading-none tracking-tight text-white sm:text-5xl md:text-7xl md:leading-[0.9]">
             <span className="block animate-rise-loop [animation-delay:0ms] motion-reduce:animate-none">CATCH</span>
-            <span className="block animate-rise-loop text-red-500 [animation-delay:150ms] motion-reduce:animate-none">EVERY</span>
-            <span className="block animate-rise-loop [animation-delay:300ms] motion-reduce:animate-none">CARD.</span>
+            <span className="block animate-rise-loop text-red-500 [animation-delay:450ms] motion-reduce:animate-none">EVERY</span>
+            <span className="block animate-rise-loop [animation-delay:900ms] motion-reduce:animate-none">CARD.</span>
           </h1>
           <div className="flex flex-wrap gap-3">
             {categories.map((category) => (
