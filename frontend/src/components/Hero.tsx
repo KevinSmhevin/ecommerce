@@ -81,7 +81,7 @@ const Hero = () => {
           <Link
             to={`/product/${active.slug}`}
             aria-label={`Featured: ${active.title}`}
-            className="group absolute right-6 top-1/2 z-10 hidden w-[230px] -translate-y-1/2 md:block"
+            className="group absolute right-[12%] top-1/2 z-10 hidden w-[230px] -translate-y-1/2 lg:block"
           >
             <div
               className={`glass overflow-hidden rounded-2xl border border-white/15 shadow-[0_18px_50px_-18px_rgba(0,0,0,0.7),0_0_24px_-6px_rgba(220,38,38,0.4)] transition-all duration-500 group-hover:-translate-y-1 group-hover:border-red-500/50 ${
