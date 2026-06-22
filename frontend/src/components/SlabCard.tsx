@@ -8,7 +8,7 @@ interface SlabCardProps {
 const SlabCard = ({ product }: SlabCardProps) => (
   <Link
     to={`/product/${product.slug}`}
-    className="glass group relative flex w-[230px] shrink-0 snap-start flex-col overflow-hidden rounded-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition-all duration-300 hover:-translate-y-1.5 hover:border-red-500/40 hover:shadow-[0_18px_50px_-12px_rgba(220,38,38,0.55)]"
+    className="glass group relative flex w-[230px] shrink-0 flex-col overflow-hidden rounded-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition-all duration-300 hover:-translate-y-1.5 hover:border-red-500/40 hover:shadow-[0_18px_50px_-12px_rgba(220,38,38,0.55)]"
   >
     <div className="relative aspect-[3/4] w-full overflow-hidden bg-black/30">
       <div

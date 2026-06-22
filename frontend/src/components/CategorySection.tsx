@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useProductsQuery } from '@/hooks/useProductsQuery'
@@ -11,6 +11,12 @@ export const categorySectionId = (slug: string) => `category-${slug}`
 
 const MAX_PRODUCTS = 12
 const SCROLL_STEP_PX = 640
+const AUTO_SCROLL_PX_PER_SEC = 14
+
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 interface CategorySectionProps {
   category: Category
@@ -27,6 +33,55 @@ const CategorySection = ({ category }: CategorySectionProps) => {
   const scrollByStep = (direction: 1 | -1) => {
     scrollerRef.current?.scrollBy({ left: direction * SCROLL_STEP_PX, behavior: 'smooth' })
   }
+
+  useEffect(() => {
+    const el = scrollerRef.current
+    if (!el || products.length === 0 || prefersReducedMotion()) return
+
+    // Track the position as a float so sub-pixel-per-frame increments aren't
+    // lost to scrollLeft's integer rounding; re-sync it after manual scroll.
+    let position = el.scrollLeft
+    let paused = false
+    const pause = () => { paused = true }
+    const resume = () => {
+      position = el.scrollLeft
+      paused = false
+    }
+    el.addEventListener('pointerenter', pause)
+    el.addEventListener('pointerleave', resume)
+    el.addEventListener('pointerdown', pause)
+    el.addEventListener('focusin', pause)
+
+    let raf = 0
+    let last = performance.now()
+    let direction: 1 | -1 = 1
+    const step = (now: number) => {
+      const dt = Math.min((now - last) / 1000, 0.1)
+      last = now
+      const max = el.scrollWidth - el.clientWidth
+      if (!paused && max > 1) {
+        position += direction * AUTO_SCROLL_PX_PER_SEC * dt
+        if (position >= max) {
+          position = max
+          direction = -1
+        } else if (position <= 0) {
+          position = 0
+          direction = 1
+        }
+        el.scrollLeft = position
+      }
+      raf = requestAnimationFrame(step)
+    }
+    raf = requestAnimationFrame(step)
+
+    return () => {
+      cancelAnimationFrame(raf)
+      el.removeEventListener('pointerenter', pause)
+      el.removeEventListener('pointerleave', resume)
+      el.removeEventListener('pointerdown', pause)
+      el.removeEventListener('focusin', pause)
+    }
+  }, [products.length])
 
   if (!productsQuery.isPending && products.length === 0) return null
 
@@ -64,7 +119,7 @@ const CategorySection = ({ category }: CategorySectionProps) => {
         <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/45 px-5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-2xl backdrop-saturate-150">
           <div
             ref={scrollerRef}
-            className="flex gap-4 overflow-x-auto pb-3 pt-2 snap-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="flex gap-4 overflow-x-auto pb-3 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {productsQuery.isPending
               ? Array.from({ length: 5 }).map((_, i) => (
