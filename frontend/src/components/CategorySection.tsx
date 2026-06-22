@@ -38,11 +38,11 @@ const CategorySection = ({ category }: CategorySectionProps) => {
       <div className="relative mb-5 overflow-hidden rounded-2xl border border-white/10">
         {bannerImage && (
           <>
-            <img src={bannerImage} alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover opacity-25" />
-            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 to-black/40" />
+            <img src={bannerImage} alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover object-center opacity-50" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15" />
           </>
         )}
-        <div className="relative flex items-end justify-between gap-4 p-5">
+        <div className="relative flex min-h-[150px] items-end justify-between gap-4 p-5 md:min-h-[170px]">
           <div>
             <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-red-500">Graded · Authenticated</span>
             <div className="mt-1.5 flex flex-wrap items-baseline gap-3">
@@ -72,7 +72,7 @@ const CategorySection = ({ category }: CategorySectionProps) => {
 
         <div
           ref={scrollerRef}
-          className="flex gap-4 overflow-x-auto pb-3 snap-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex gap-4 overflow-x-auto px-1 pb-6 pt-3 snap-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {productsQuery.isPending
             ? Array.from({ length: 5 }).map((_, i) => (
