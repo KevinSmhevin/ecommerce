@@ -24,14 +24,11 @@ test.beforeEach(async ({ page }) => {
 })
 
 test('anonymous user can browse, add to cart, and reach a gated checkout', async ({ page }) => {
-  // 1) Land on home and pick the first product card from a category carousel.
+  // 1) Land on home and pick the first product card from a category rail.
   await page.goto('/')
 
-  // Each category section starts as a full-width banner covering its product
-  // carousel; clicking the banner slides it out to reveal the cards in the
-  // same row.
-  await page.getByRole('button', { name: /show .* products/i }).first().click()
-
+  // The home page renders per-category slab rails of ProductCards (no single
+  // #products grid). Pick the first product link.
   const firstProductLink = page.locator('a[href^="/product/"]').first()
   await expect(firstProductLink).toBeVisible()
   const productTitle = (await firstProductLink.locator('h3').textContent())?.trim()

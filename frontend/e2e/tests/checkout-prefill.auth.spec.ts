@@ -27,9 +27,8 @@ test('checkout pre-fills the saved shipping address and email is reactive', asyn
   //    via its own state setters (not via a localStorage pre-seed, which
   //    races with CartProvider's mount-effect that writes [] back).
   await page.goto('/')
-  // Each category section starts as a full-width banner over its carousel;
-  // reveal the first one, then pick the first product link on the page.
-  await page.getByRole('button', { name: /show .* products/i }).first().click()
+  // The home page renders per-category slab rails of ProductCards; pick the
+  // first product link on the page.
   const firstProduct = page.locator('a[href^="/product/"]').first()
   await expect(firstProduct).toBeVisible()
   await firstProduct.click()
