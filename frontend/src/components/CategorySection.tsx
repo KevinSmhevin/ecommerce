@@ -61,7 +61,7 @@ const CategorySection = ({ category }: CategorySectionProps) => {
       </div>
 
       <div className="group/rail relative">
-        <div className="overflow-hidden rounded-2xl border border-white/15 bg-white/[0.06] px-5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.18),inset_0_-1px_0_rgba(0,0,0,0.25)] backdrop-blur-2xl backdrop-saturate-150">
+        <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/45 px-5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-2xl backdrop-saturate-150">
           <div
             ref={scrollerRef}
             className="flex gap-4 overflow-x-auto pb-3 pt-2 snap-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
