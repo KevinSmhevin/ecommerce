@@ -61,10 +61,10 @@ const CategorySection = ({ category }: CategorySectionProps) => {
       </div>
 
       <div className="group/rail relative">
-        <div className="overflow-hidden rounded-2xl bg-black/20 shadow-[inset_0_2px_14px_rgba(0,0,0,0.4)] backdrop-blur-md">
+        <div className="overflow-hidden rounded-2xl bg-black/20 px-5 py-2 shadow-[inset_0_2px_14px_rgba(0,0,0,0.4)] backdrop-blur-md">
           <div
             ref={scrollerRef}
-            className="flex gap-4 overflow-x-auto px-5 pb-5 pt-4 snap-x [mask-image:linear-gradient(to_right,transparent,#000_20px,#000_calc(100%_-_20px),transparent)] [scrollbar-width:none] [-webkit-mask-image:linear-gradient(to_right,transparent,#000_20px,#000_calc(100%_-_20px),transparent)] [&::-webkit-scrollbar]:hidden"
+            className="flex gap-4 overflow-x-auto pb-3 pt-2 snap-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {productsQuery.isPending
               ? Array.from({ length: 5 }).map((_, i) => (
