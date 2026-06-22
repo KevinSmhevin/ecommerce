@@ -61,18 +61,9 @@ const CategorySection = ({ category }: CategorySectionProps) => {
       </div>
 
       <div className="group/rail relative">
-        <button
-          type="button"
-          aria-label="Scroll left"
-          onClick={() => scrollByStep(-1)}
-          className="absolute left-0 top-[42%] z-10 hidden h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/70 text-white opacity-0 transition-opacity hover:bg-red-600 group-hover/rail:opacity-100 md:flex"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-
         <div
           ref={scrollerRef}
-          className="flex gap-4 overflow-x-auto px-1 pb-6 pt-3 snap-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex gap-4 overflow-x-auto rounded-2xl bg-black/20 px-4 pb-5 pt-4 shadow-[inset_0_2px_14px_rgba(0,0,0,0.4)] backdrop-blur-md snap-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {productsQuery.isPending
             ? Array.from({ length: 5 }).map((_, i) => (
@@ -87,14 +78,21 @@ const CategorySection = ({ category }: CategorySectionProps) => {
 
         <button
           type="button"
+          aria-label="Scroll left"
+          onClick={() => scrollByStep(-1)}
+          className="absolute left-2 top-[42%] z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/80 text-white opacity-0 shadow-lg transition-opacity hover:bg-red-600 group-hover/rail:opacity-100 md:flex"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+
+        <button
+          type="button"
           aria-label="Scroll right"
           onClick={() => scrollByStep(1)}
-          className="absolute right-0 top-[42%] z-10 hidden h-10 w-10 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/70 text-white opacity-0 transition-opacity hover:bg-red-600 group-hover/rail:opacity-100 md:flex"
+          className="absolute right-2 top-[42%] z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/80 text-white opacity-0 shadow-lg transition-opacity hover:bg-red-600 group-hover/rail:opacity-100 md:flex"
         >
           <ChevronRight className="h-5 w-5" />
         </button>
-
-        <div className="pointer-events-none h-2 rounded-full bg-gradient-to-b from-white/12 to-transparent" />
       </div>
     </section>
   )
